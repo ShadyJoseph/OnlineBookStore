@@ -1,5 +1,6 @@
 package org.example.ui;
 
+import org.example.enums.OrderStatus;
 import org.example.models.CartItem;
 import org.example.models.Order;
 import org.example.services.CartService;
@@ -10,8 +11,12 @@ import java.util.Scanner;
 
 public class CartUI {
     private final CartService cartService = new CartService();
-    private final OrderService orderService = new OrderService();
+    private final OrderService orderService;
     private final Scanner scanner = new Scanner(System.in);
+
+    public CartUI(OrderService orderService) {
+        this.orderService = orderService;
+    }
 
     public void manageCart(int customerId) {
         while (true) {
@@ -25,7 +30,8 @@ public class CartUI {
             System.out.println("7. Cancel Order");
             System.out.println("8. Exit");
             System.out.print("Choose an option: ");
-            int choice = scanner.nextInt();
+
+            int choice = getInputAsInt();
 
             switch (choice) {
                 case 1 -> viewCart();
@@ -35,8 +41,11 @@ public class CartUI {
                 case 5 -> placeOrder(customerId);
                 case 6 -> viewOrders(customerId);
                 case 7 -> cancelOrder();
-                case 8 -> { return; }
-                default -> System.out.println("Invalid choice. Try again.");
+                case 8 -> {
+                    System.out.println("Exiting cart management. Thank you!");
+                    return;
+                }
+                default -> System.out.println("Invalid choice. Please try again.");
             }
         }
     }
@@ -48,39 +57,36 @@ public class CartUI {
         } else {
             System.out.println("Cart Items:");
             for (CartItem item : cartItems) {
-                System.out.printf("Book ID: %d, Quantity: %d, Price: %.2f\n", item.getBookId(), item.getQuantity(), item.getPrice());
+                System.out.printf("Book ID: %d, Quantity: %d, Price: %.2f\n",
+                        item.getBookId(), item.getQuantity(), item.getPrice());
             }
         }
     }
 
     private void addBookToCart() {
         System.out.print("Enter Book ID: ");
-        int bookId = scanner.nextInt();
+        int bookId = getInputAsInt();
         System.out.print("Enter Quantity: ");
-        int quantity = scanner.nextInt();
+        int quantity = getInputAsInt();
         System.out.print("Enter Price: ");
-        double price = scanner.nextDouble();
+        double price = getInputAsDouble();
 
-        cartService.addToCart(new CartItem() {{
-            setBookId(bookId);
-            setQuantity(quantity);
-            setPrice(price);
-        }});
+        cartService.addToCart(new CartItem(bookId, quantity, price));
         System.out.println("Book added to cart.");
     }
 
     private void editCart() {
         System.out.print("Enter Book ID to edit: ");
-        int bookId = scanner.nextInt();
+        int bookId = getInputAsInt();
         System.out.print("Enter New Quantity: ");
-        int newQuantity = scanner.nextInt();
+        int newQuantity = getInputAsInt();
         cartService.editCart(bookId, newQuantity);
         System.out.println("Cart updated.");
     }
 
     private void removeBookFromCart() {
         System.out.print("Enter Book ID to remove: ");
-        int bookId = scanner.nextInt();
+        int bookId = getInputAsInt();
         cartService.removeFromCart(bookId);
         System.out.println("Book removed from cart.");
     }
@@ -91,8 +97,14 @@ public class CartUI {
             System.out.println("Cart is empty. Add items to place an order.");
             return;
         }
-        double totalAmount = cartItems.stream().mapToDouble(item -> item.getPrice() * item.getQuantity()).sum();
-        Order order = orderService.placeOrder(customerId, cartItems, totalAmount);
+        System.out.print("Enter Delivery Address: ");
+        scanner.nextLine(); // Consume newline left by nextInt()
+        String deliveryAddress = scanner.nextLine();
+        double totalAmount = cartItems.stream()
+                .mapToDouble(item -> item.getPrice() * item.getQuantity())
+                .sum();
+
+        Order order = orderService.placeOrder(customerId, cartItems, totalAmount, deliveryAddress);
         cartService.clearCart();
         System.out.println("Order placed successfully! Order ID: " + order.getId());
     }
@@ -112,8 +124,24 @@ public class CartUI {
 
     private void cancelOrder() {
         System.out.print("Enter Order ID to cancel: ");
-        int orderId = scanner.nextInt();
-        orderService.cancelOrder(orderId);
+        int orderId = getInputAsInt();
+        orderService.updateOrderStatus(orderId, OrderStatus.CANCELED);
         System.out.println("Order cancellation requested.");
+    }
+
+    private int getInputAsInt() {
+        while (!scanner.hasNextInt()) {
+            System.out.println("Invalid input. Please enter a number.");
+            scanner.next();
+        }
+        return scanner.nextInt();
+    }
+
+    private double getInputAsDouble() {
+        while (!scanner.hasNextDouble()) {
+            System.out.println("Invalid input. Please enter a valid number.");
+            scanner.next();
+        }
+        return scanner.nextDouble();
     }
 }

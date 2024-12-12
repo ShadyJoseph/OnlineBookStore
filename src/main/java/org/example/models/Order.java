@@ -10,6 +10,8 @@ public class Order {
     private double totalAmount;
     private List<CartItem> items;
     private String status;
+    private String deliveryAddress;
+    private LocalDateTime deliveredAt;
 
     // Getters and Setters
     public int getId() { return id; }
@@ -24,4 +26,8 @@ public class Order {
     public void setItems(List<CartItem> items) { this.items = items; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getDeliveryAddress() { return deliveryAddress; }
+    public void setDeliveryAddress(String deliveryAddress) { this.deliveryAddress = deliveryAddress; }
+    public LocalDateTime getDeliveredAt() { return deliveredAt; }
+    public void setDeliveredAt(LocalDateTime deliveredAt) { this.deliveredAt = deliveredAt; }
 }

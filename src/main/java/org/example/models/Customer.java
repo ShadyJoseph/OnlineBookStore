@@ -1,19 +1,24 @@
 package org.example.models;
 
+import org.example.enums.UserRole;
+
 public class Customer {
     private int id;
     private String username;
     private String password; // Should store only hashed passwords
     private String address;
     private String phone;
+    private UserRole role;
 
     // Constructor for immutability (Optional, if required)
-    public Customer(int id, String username, String password, String address, String phone) {
+    public Customer(int id, String username, String password, String address, String phone, UserRole role) {
         this.id = id;
         this.username = username;
         this.password = password;
         this.address = address;
         this.phone = phone;
+        this.role = role;
+
     }
 
     // Default constructor for frameworks/serialization
@@ -58,6 +63,14 @@ public class Customer {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public UserRole getRole() {
+        return role;
+    }
+
+    public void setRole(UserRole role) {
+        this.role = role;
     }
 
     @Override
