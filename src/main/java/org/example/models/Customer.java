@@ -1,54 +1,20 @@
 package org.example.models;
 
-import org.example.enums.UserRole;
-
-public class Customer {
-    private int id;
-    private String username;
-    private String password; // Should store only hashed passwords
+public class Customer extends User {
     private String address;
     private String phone;
-    private UserRole role;
 
-    // Constructor for immutability (Optional, if required)
-    public Customer(int id, String username, String password, String address, String phone, UserRole role) {
-        this.id = id;
-        this.username = username;
-        this.password = password;
+    public Customer(String username, String password, String address, String phone) {
+        super(username, password, org.example.enums.UserRole.CUSTOMER);
         this.address = address;
         this.phone = phone;
-        this.role = role;
-
     }
 
-    // Default constructor for frameworks/serialization
-    public Customer() {}
-
-    // Getters and Setters
-    public int getId() {
-        return id;
+    public Customer() {
+        super();
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
+    // Getters and setters
     public String getAddress() {
         return address;
     }
@@ -65,21 +31,13 @@ public class Customer {
         this.phone = phone;
     }
 
-    public UserRole getRole() {
-        return role;
-    }
-
-    public void setRole(UserRole role) {
-        this.role = role;
+    @Override
+    public void displayCapabilities() {
+        System.out.println("Customer Capabilities: Browse Books, Manage Cart, Place Orders, and Write Reviews.");
     }
 
     @Override
     public String toString() {
-        return "Customer{" +
-                "id=" + id +
-                ", username='" + username + '\'' +
-                ", address='" + address + '\'' +
-                ", phone='" + phone + '\'' +
-                '}';
+        return super.toString() + ", address='" + address + '\'' + ", phone='" + phone + '\'';
     }
 }

@@ -1,6 +1,7 @@
 package org.example.models;
 
 public class Book {
+    private static int idCounter = 1;
     private int id;
     private String title;
     private String author;
@@ -10,6 +11,19 @@ public class Book {
     private int popularity;
     private String edition;
     private String coverImage;
+
+    // Constructors
+    public Book(String title, String author, double price, int stock, String category, int popularity, String edition, String coverImage) {
+        this.id = idCounter++;
+        this.title = title;
+        this.author = author;
+        this.price = price;
+        this.stock = stock;
+        this.category = category;
+        this.popularity = popularity;
+        this.edition = edition;
+        this.coverImage = coverImage;
+    }
 
     // Getters and Setters
     public int getId() {
@@ -82,5 +96,21 @@ public class Book {
 
     public void setCoverImage(String coverImage) {
         this.coverImage = coverImage;
+    }
+
+    // Override toString() for better representation of the book object
+    @Override
+    public String toString() {
+        return "Book{" +
+                "id=" + id +
+                ", title='" + title + '\'' +
+                ", author='" + author + '\'' +
+                ", price=" + price +
+                ", stock=" + stock +
+                ", category='" + category + '\'' +
+                ", popularity=" + popularity +
+                ", edition='" + edition + '\'' +
+                ", coverImage='" + coverImage + '\'' +
+                '}';
     }
 }
