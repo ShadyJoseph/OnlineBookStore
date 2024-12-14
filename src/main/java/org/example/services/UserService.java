@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class UserService {
-    private final String usersFilePath = "src/resources/users.txt";
+    private final String usersFilePath = "src/main/resources/users.txt";
     private final List<User> users = new ArrayList<>();
 
     public UserService() {
