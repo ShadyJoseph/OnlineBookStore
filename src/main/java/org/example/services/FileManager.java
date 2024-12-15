@@ -13,6 +13,8 @@ public class FileManager {
 
     public List<Book> loadBooksFromFile() {
         List<Book> books = new ArrayList<>();
+        int maxId = 0;
+
         try (BufferedReader reader = Files.newBufferedReader(Paths.get(FILE_PATH))) {
             String line;
             while ((line = reader.readLine()) != null) {
@@ -29,7 +31,17 @@ public class FileManager {
                         String edition = parts[7].trim();
                         String coverImage = parts[8].trim();
 
-                        books.add(new Book( title, author, price, stock, category, popularity, edition, coverImage));
+                        // Check for duplicate IDs
+                        boolean duplicateId = books.stream().anyMatch(book -> book.getId() == id);
+                        if (duplicateId) {
+                            System.err.println("Duplicate ID detected, skipping line: " + line);
+                            continue;
+                        }
+
+                        books.add(new Book(id, title, author, price, stock, category, popularity, edition, coverImage));
+                        if (id > maxId) {
+                            maxId = id;
+                        }
                     } catch (NumberFormatException e) {
                         System.err.println("Invalid number format in line: " + line);
                     }
@@ -40,8 +52,12 @@ public class FileManager {
         } catch (IOException e) {
             System.err.println("Error reading book file: " + e.getMessage());
         }
+
+        // Update the idCounter in the Book class
+        Book.setIdCounter(maxId + 1);
         return books;
     }
+
 
     public void saveBooksToFile(List<Book> books) {
         try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(FILE_PATH))) {

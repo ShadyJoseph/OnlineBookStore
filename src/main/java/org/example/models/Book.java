@@ -1,7 +1,7 @@
 package org.example.models;
 
 public class Book {
-    private static int idCounter = 1;
+    private static int idCounter = 1; // Static counter for unique IDs
     private int id;
     private String title;
     private String author;
@@ -25,6 +25,18 @@ public class Book {
         this.coverImage = coverImage;
     }
 
+    public Book(int id, String title, String author, double price, int stock, String category, int popularity, String edition, String coverImage) {
+        this.id = id;
+        this.title = title;
+        this.author = author;
+        this.price = price;
+        this.stock = stock;
+        this.category = category;
+        this.popularity = popularity;
+        this.edition = edition;
+        this.coverImage = coverImage;
+    }
+
     // Getters and Setters
     public int getId() {
         return id;
@@ -32,6 +44,9 @@ public class Book {
 
     public void setId(int id) {
         this.id = id;
+    }
+    public static void setIdCounter(int newCounter) {
+        idCounter = newCounter;
     }
 
     public String getTitle() {
