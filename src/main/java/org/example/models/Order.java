@@ -5,6 +5,7 @@ import java.util.List;
 
 public class Order {
     private int id;
+    private static int orderIdCounter = 1;
     private int customerId;
     private LocalDateTime orderDate;
     private double totalAmount;
@@ -19,6 +20,8 @@ public class Order {
     // Constructor with parameters
     public Order(int customerId, LocalDateTime orderDate, double totalAmount,
                  List<CartItem> items, String status, String deliveryAddress) {
+
+        id = orderIdCounter++;
         this.customerId = customerId;
         this.orderDate = orderDate;
         this.totalAmount = totalAmount;

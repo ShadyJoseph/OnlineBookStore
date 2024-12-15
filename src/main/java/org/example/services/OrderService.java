@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 public class OrderService {
     private static final String ORDERS_FILE = "src/main/resources/orders.txt";
     private final List<Order> orders = new ArrayList<>();
-    private int orderIdCounter = 1; // To ensure unique order IDs
 
     // Constructor that loads orders from file
     public OrderService() {
@@ -69,7 +68,6 @@ public class OrderService {
                 OrderStatus.PENDING.name(),
                 deliveryAddress
         );
-        newOrder.setId(orderIdCounter++); // Assign a unique ID
         newOrder.calculateTotalAmount();
         orders.add(newOrder);
         System.out.println("Order placed: " + newOrder);

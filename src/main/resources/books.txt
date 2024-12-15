@@ -1,1 +1,2 @@
-1,book,shady,book,20.0,22,null,
+1,Effective Java,Joshua Bloch,45.00,10,Programming,5,3rd Edition,image.jpg
+2,Effective Java,Joshua Bloch,45.00,10,Programming,5,3rd Edition,image.jpg
