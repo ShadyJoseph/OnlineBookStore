@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CategoryService {
-    private static final String FILE_PATH = "src/main/resources/categories.txt"; // Update the path as needed
+    private static final String FILE_PATH = "src/main/resources/categories.txt";
     private final List<Category> categories = new ArrayList<>();
 
     // Add a new category
