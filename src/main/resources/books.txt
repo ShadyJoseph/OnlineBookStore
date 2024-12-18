@@ -11,5 +11,3 @@
 11,C++,Youssef,60.00,10,Programming,5,3rd Edition,image.jpg
 12,JavaScript,afsha,70.00,10,Programming,5,3rd Edition,image.jpg
 13,Java,Shady,50.00,10,Programming,5,3rd Edition,image.jpg
-14,C++,Youssef,60.00,10,Programming,5,3rd Edition,image.jpg
-15,JavaScript,Afsha,70.00,10,Programming,5,3rd Edition,image.jpg

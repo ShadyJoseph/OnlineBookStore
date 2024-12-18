@@ -1,35 +1,22 @@
 package org.example.models;
 
+import org.example.enums.UserRole;
+
 public class Customer extends User {
     private String address;
     private String phone;
 
-    public Customer(String username, String password, String address, String phone) {
-        super(username, password, org.example.enums.UserRole.CUSTOMER);
+    public Customer(int id, String username, String password, String address, String phone) {
+        super(id, username, password, UserRole.CUSTOMER);
         this.address = address;
         this.phone = phone;
     }
 
-    public Customer() {
-        super();
-    }
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
 
-    // Getters and setters
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
 
     @Override
     public void displayCapabilities() {
@@ -37,7 +24,7 @@ public class Customer extends User {
     }
 
     @Override
-    public String toString() {
-        return super.toString() + ", address='" + address + '\'' + ", phone='" + phone + '\'';
+    public String toFileString() {
+        return getId() + "," + getUsername() + "," + getPassword() + ",CUSTOMER," + address + "," + phone;
     }
 }

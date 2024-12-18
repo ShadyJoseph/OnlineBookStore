@@ -1,1 +1,1 @@
-User{id=1, username='shady', role=CUSTOMER}, address='nasr', phone='0128468888'
+1,shady,$2a$10$2zV9.WlSPWKSl9LazHLk5eApXkpYNsRC3SnBAI6G1/4PYoAphVkQy,CUSTOMER,cairo,01284688383
