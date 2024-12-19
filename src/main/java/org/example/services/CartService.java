@@ -9,7 +9,7 @@ public class CartService {
     private final Cart cart;
 
     public CartService() {
-        this.cart = new Cart(); // Instantiate the cart object
+        this.cart = Cart.getInstance(); // Use Singleton to get the Cart instance
     }
 
     public void addBookToCart(int bookId, String bookName, int quantity, double price) {

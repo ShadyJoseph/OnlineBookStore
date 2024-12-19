@@ -1,8 +1,10 @@
 package org.example.services;
 
+import org.example.enums.UserRole;
 import org.example.models.Admin;
 import org.example.models.Customer;
 import org.example.models.User;
+import org.example.models.UserFactory;
 import org.example.utils.HashUtil;
 import org.example.utils.ValidationUtil;
 
@@ -58,19 +60,22 @@ public class UserService {
         String password = parts[2].trim();
         String role = parts[3].trim();
 
-        if (ROLE_CUSTOMER.equals(role)) {
+        UserRole userRole = UserRole.valueOf(role); // Convert role string to enum
+
+        if (userRole == UserRole.CUSTOMER) {
             if (parts.length < 6) throw new IllegalArgumentException("Incomplete customer data");
             String address = parts[4].trim();
             String phone = parts[5].trim();
-            users.add(new Customer(id, username, password, address, phone));
-        } else if (ROLE_ADMIN.equals(role)) {
-            users.add(new Admin(id, username, password));
+            users.add(UserFactory.createUser(id, username, password, userRole, address, phone));
+        } else if (userRole == UserRole.ADMIN) {
+            users.add(UserFactory.createUser(id, username, password, userRole, null, null));
         } else {
             throw new IllegalArgumentException("Unknown role: " + role);
         }
 
         userIdCounter.set(Math.max(userIdCounter.get(), id + 1));
     }
+
 
     private void saveUsersToFile() {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(USERS_FILE_PATH))) {
@@ -94,10 +99,12 @@ public class UserService {
         }
 
         String hashedPassword = HashUtil.hashPassword(password);
-        users.add(new Customer(userIdCounter.getAndIncrement(), username, hashedPassword, address, phone));
+        // Assuming "CUSTOMER" role for signUp
+        users.add(UserFactory.createUser(userIdCounter.getAndIncrement(), username, hashedPassword, UserRole.CUSTOMER, address, phone));
         saveUsersToFile();
         return true;
     }
+
 
     public synchronized User logIn(String username, String password) {
         Optional<User> user = users.stream()

@@ -8,9 +8,25 @@ public class Cart {
     private static final String CART_FILE = "src/main/resources/cart.txt";
     private final List<CartItem> items;
 
-    public Cart() {
+    // The single instance of the Cart
+    private static Cart instance;
+
+    // Private constructor to prevent instantiation
+    private Cart() {
         this.items = new ArrayList<>();
         loadFromFile();
+    }
+
+    // Public method to get the instance
+    public static Cart getInstance() {
+        if (instance == null) {
+            synchronized (Cart.class) {
+                if (instance == null) {
+                    instance = new Cart();
+                }
+            }
+        }
+        return instance;
     }
 
     public void addItem(CartItem item) {
