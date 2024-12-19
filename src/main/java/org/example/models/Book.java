@@ -1,131 +1,90 @@
 package org.example.models;
 
+import javafx.beans.property.*;
+
 public class Book {
     private static int idCounter = 1; // Static counter for unique IDs
-    private int id;
-    private String title;
-    private String author;
-    private double price;
-    private int stock;
-    private String category;
-    private int popularity;
-    private String edition;
-    private String coverImage;
+    private final IntegerProperty id;
+    private final StringProperty title;
+    private final StringProperty author;
+    private final DoubleProperty price;
+    private final IntegerProperty stock;
+    private final StringProperty category;
+    private final IntegerProperty popularity;
+    private final StringProperty edition;
+    private final StringProperty coverImage;
 
-    // Constructors
+    // Constructor with auto-generated ID
     public Book(String title, String author, double price, int stock, String category, int popularity, String edition, String coverImage) {
-        this.id = idCounter++;
-        this.title = title;
-        this.author = author;
-        this.price = price;
-        this.stock = stock;
-        this.category = category;
-        this.popularity = popularity;
-        this.edition = edition;
-        this.coverImage = coverImage;
+        this.id = new SimpleIntegerProperty(idCounter++);
+        this.title = new SimpleStringProperty(title);
+        this.author = new SimpleStringProperty(author);
+        this.price = new SimpleDoubleProperty(price);
+        this.stock = new SimpleIntegerProperty(stock);
+        this.category = new SimpleStringProperty(category);
+        this.popularity = new SimpleIntegerProperty(popularity);
+        this.edition = new SimpleStringProperty(edition);
+        this.coverImage = new SimpleStringProperty(coverImage);
     }
 
+    // Constructor with custom ID
     public Book(int id, String title, String author, double price, int stock, String category, int popularity, String edition, String coverImage) {
-        this.id = id;
-        this.title = title;
-        this.author = author;
-        this.price = price;
-        this.stock = stock;
-        this.category = category;
-        this.popularity = popularity;
-        this.edition = edition;
-        this.coverImage = coverImage;
+        this.id = new SimpleIntegerProperty(id);
+        this.title = new SimpleStringProperty(title);
+        this.author = new SimpleStringProperty(author);
+        this.price = new SimpleDoubleProperty(price);
+        this.stock = new SimpleIntegerProperty(stock);
+        this.category = new SimpleStringProperty(category);
+        this.popularity = new SimpleIntegerProperty(popularity);
+        this.edition = new SimpleStringProperty(edition);
+        this.coverImage = new SimpleStringProperty(coverImage);
     }
 
-    // Getters and Setters
-    public int getId() {
-        return id;
-    }
+    // Property Getters
+    public IntegerProperty idProperty() { return id; }
+    public StringProperty titleProperty() { return title; }
+    public StringProperty authorProperty() { return author; }
+    public DoubleProperty priceProperty() { return price; }
+    public IntegerProperty stockProperty() { return stock; }
+    public StringProperty categoryProperty() { return category; }
+    public IntegerProperty popularityProperty() { return popularity; }
+    public StringProperty editionProperty() { return edition; }
+    public StringProperty coverImageProperty() { return coverImage; }
 
-    public void setId(int id) {
-        this.id = id;
-    }
-    public static void setIdCounter(int newCounter) {
-        idCounter = newCounter;
-    }
+    // Field Getters and Setters
+    public int getId() { return id.get(); }
+    public void setId(int id) { this.id.set(id); }
+    public static void setIdCounter(int newCounter) { idCounter = newCounter; }
+    public String getTitle() { return title.get(); }
+    public void setTitle(String title) { this.title.set(title); }
+    public String getAuthor() { return author.get(); }
+    public void setAuthor(String author) { this.author.set(author); }
+    public double getPrice() { return price.get(); }
+    public void setPrice(double price) { this.price.set(price); }
+    public int getStock() { return stock.get(); }
+    public void setStock(int stock) { this.stock.set(stock); }
+    public String getCategory() { return category.get(); }
+    public void setCategory(String category) { this.category.set(category); }
+    public int getPopularity() { return popularity.get(); }
+    public void setPopularity(int popularity) { this.popularity.set(popularity); }
+    public String getEdition() { return edition.get(); }
+    public void setEdition(String edition) { this.edition.set(edition); }
+    public String getCoverImage() { return coverImage.get(); }
+    public void setCoverImage(String coverImage) { this.coverImage.set(coverImage); }
 
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(String author) {
-        this.author = author;
-    }
-
-    public double getPrice() {
-        return price;
-    }
-
-    public void setPrice(double price) {
-        this.price = price;
-    }
-
-    public int getStock() {
-        return stock;
-    }
-
-    public void setStock(int stock) {
-        this.stock = stock;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public int getPopularity() {
-        return popularity;
-    }
-
-    public void setPopularity(int popularity) {
-        this.popularity = popularity;
-    }
-
-    public String getEdition() {
-        return edition;
-    }
-
-    public void setEdition(String edition) {
-        this.edition = edition;
-    }
-
-    public String getCoverImage() {
-        return coverImage;
-    }
-
-    public void setCoverImage(String coverImage) {
-        this.coverImage = coverImage;
-    }
-
-    // Override toString() for better representation of the book object
+    // Override toString() for Debugging
     @Override
     public String toString() {
         return "Book{" +
-                "id=" + id +
-                ", title='" + title + '\'' +
-                ", author='" + author + '\'' +
-                ", price=" + price +
-                ", stock=" + stock +
-                ", category='" + category + '\'' +
-                ", popularity=" + popularity +
-                ", edition='" + edition + '\'' +
-                ", coverImage='" + coverImage + '\'' +
+                "id=" + getId() +
+                ", title='" + getTitle() + '\'' +
+                ", author='" + getAuthor() + '\'' +
+                ", price=" + getPrice() +
+                ", stock=" + getStock() +
+                ", category='" + getCategory() + '\'' +
+                ", popularity=" + getPopularity() +
+                ", edition='" + getEdition() + '\'' +
+                ", coverImage='" + getCoverImage() + '\'' +
                 '}';
     }
 }

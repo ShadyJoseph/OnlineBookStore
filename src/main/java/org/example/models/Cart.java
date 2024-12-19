@@ -1,69 +1,89 @@
 package org.example.models;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Cart {
+    private static final String CART_FILE = "src/main/resources/cart.txt";
     private final List<CartItem> items;
 
-    // Default Constructor
     public Cart() {
         this.items = new ArrayList<>();
+        loadFromFile();
     }
 
-    // Add a CartItem to the cart
     public void addItem(CartItem item) {
         if (item == null) throw new IllegalArgumentException("Cart item cannot be null.");
-        for (CartItem cartItem : items) {
-            if (cartItem.equals(item)) {
-                cartItem.setQuantity(cartItem.getQuantity() + item.getQuantity());
+        for (CartItem existingItem : items) {
+            if (existingItem.getBookId() == item.getBookId()) {
+                existingItem.setQuantity(existingItem.getQuantity() + item.getQuantity());
+                saveToFile();
                 return;
             }
         }
         items.add(item);
+        saveToFile();
     }
 
-    // Remove a CartItem by bookId
     public void removeItem(int bookId) {
-        items.removeIf(cartItem -> cartItem.getBookId() == bookId);
+        items.removeIf(item -> item.getBookId() == bookId);
+        saveToFile();
     }
 
-    // Update quantity of an existing CartItem
     public void updateQuantity(int bookId, int quantity) {
-        if (quantity <= 0) throw new IllegalArgumentException("Quantity must be positive.");
-        for (CartItem cartItem : items) {
-            if (cartItem.getBookId() == bookId) {
-                cartItem.setQuantity(quantity);
+        for (CartItem item : items) {
+            if (item.getBookId() == bookId) {
+                item.setQuantity(quantity);
+                saveToFile();
                 return;
             }
         }
-        throw new IllegalArgumentException("Item with bookId " + bookId + " not found in cart.");
     }
 
-    // Get total price of the cart
+    public void updatePrice(int bookId, double price) {
+        for (CartItem item : items) {
+            if (item.getBookId() == bookId) {
+                item.setPrice(price);
+                saveToFile();
+                return;
+            }
+        }
+    }
+
     public double getTotalPrice() {
         return items.stream()
                 .mapToDouble(CartItem::getTotalPrice)
                 .sum();
     }
 
-    // Clear the cart
     public void clear() {
         items.clear();
+        saveToFile();
     }
 
-    // Get the list of all CartItems
     public List<CartItem> getItems() {
-        return new ArrayList<>(items);
+        return items;
     }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder("Cart Contents:\n");
-        for (CartItem item : items) {
-            sb.append(item).append("\n");
+    private void saveToFile() {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(CART_FILE))) {
+            oos.writeObject(new ArrayList<>(items)); // Use a copy to avoid serialization issues
+        } catch (IOException e) {
+            System.err.println("Error saving cart to file: " + e.getMessage());
         }
-        sb.append("Total Price: ").append(getTotalPrice());
-        return sb.toString();
+    }
+
+    @SuppressWarnings("unchecked")
+    private void loadFromFile() {
+        File file = new File(CART_FILE);
+        if (file.exists()) {
+            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
+                List<CartItem> loadedItems = (List<CartItem>) ois.readObject();
+                items.addAll(loadedItems);
+            } catch (IOException | ClassNotFoundException e) {
+                System.err.println("Error loading cart from file: " + e.getMessage());
+            }
+        }
     }
 }

@@ -1,18 +1,19 @@
+// CartItem.java
 package org.example.models;
 
-public class CartItem {
+import java.io.Serializable;
+
+public class CartItem implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private int bookId;
+    private String bookName;
     private int quantity;
     private double price;
 
-    // Default constructor
-    public CartItem() {}
-
-    // Constructor with parameters
-    public CartItem(int bookId, int quantity, double price) {
-        if (quantity <= 0) throw new IllegalArgumentException("Quantity must be positive.");
-        if (price < 0) throw new IllegalArgumentException("Price cannot be negative.");
+    public CartItem(int bookId, String bookName, int quantity, double price) {
         this.bookId = bookId;
+        this.bookName = bookName;
         this.quantity = quantity;
         this.price = price;
     }
@@ -26,12 +27,19 @@ public class CartItem {
         this.bookId = bookId;
     }
 
+    public String getBookName() {
+        return bookName;
+    }
+
+    public void setBookName(String bookName) {
+        this.bookName = bookName;
+    }
+
     public int getQuantity() {
         return quantity;
     }
 
     public void setQuantity(int quantity) {
-        if (quantity <= 0) throw new IllegalArgumentException("Quantity must be positive.");
         this.quantity = quantity;
     }
 
@@ -40,35 +48,21 @@ public class CartItem {
     }
 
     public void setPrice(double price) {
-        if (price < 0) throw new IllegalArgumentException("Price cannot be negative.");
         this.price = price;
     }
 
-    // Method to calculate total price for this cart item (price * quantity)
     public double getTotalPrice() {
-        return this.price * this.quantity;
+        return price * quantity;
     }
 
     @Override
     public String toString() {
         return "CartItem{" +
                 "bookId=" + bookId +
+                ", bookName='" + bookName + '\'' +
                 ", quantity=" + quantity +
                 ", price=" + price +
                 ", totalPrice=" + getTotalPrice() +
                 '}';
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-        CartItem that = (CartItem) obj;
-        return bookId == that.bookId;
-    }
-
-    @Override
-    public int hashCode() {
-        return Integer.hashCode(bookId);
     }
 }

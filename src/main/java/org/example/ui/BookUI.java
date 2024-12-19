@@ -1,163 +1,180 @@
 package org.example.ui;
 
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.scene.control.TableColumn;
+import javafx.stage.Stage;
 import org.example.models.Book;
+import org.example.models.CartItem;
 import org.example.services.BookServiceProxy;
+import org.example.services.CartService;
 
 public class BookUI {
+    private static final String ERROR_LOADING_BOOKS = "Failed to load books.";
+    private static final String ERROR_SEARCH_BOOKS = "Failed to search books.";
+    private static final String ALERT_INVALID_QUANTITY = "Please enter a valid quantity.";
+
     private final BookServiceProxy bookServiceProxy = new BookServiceProxy();
+    private final CartService cartService = new CartService();
+
     private final TableView<Book> bookTable = new TableView<>();
+    private final TableView<CartItem> cartTable = new TableView<>();
+
     private final ObservableList<Book> bookData = FXCollections.observableArrayList();
+    private final ObservableList<CartItem> cartData = FXCollections.observableArrayList();
 
     public VBox createMainLayout() {
-        VBox mainLayout = new VBox(10);
-        mainLayout.setPadding(new Insets(10));
+        VBox mainLayout = new VBox(15);
+        mainLayout.setPadding(new Insets(15));
 
-        Label titleLabel = new Label("Book Management System");
-        titleLabel.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
-
+        Label titleLabel = createTitleLabel("Book Management System");
         HBox controls = createControls();
-        bookTable.setPrefHeight(400);
+        configureTable(bookTable, 400);
+        configureTable(cartTable, 200);
 
-        loadTableColumns();
+        loadBookTableColumns();
+
         loadBooks();
 
         mainLayout.getChildren().addAll(titleLabel, controls, bookTable);
         return mainLayout;
     }
 
+    private Label createTitleLabel(String text) {
+        Label label = new Label(text);
+        label.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
+        return label;
+    }
+
     private HBox createControls() {
         HBox controls = new HBox(10);
+        controls.setPadding(new Insets(10, 0, 10, 0));
 
         TextField searchField = new TextField();
         searchField.setPromptText("Search by title or author");
 
         Button searchButton = new Button("Search");
-        searchButton.setOnAction(e -> searchBooks(searchField.getText()));
+        searchButton.setOnAction(e -> searchBooks(searchField.getText().trim()));
 
-        Button addButton = new Button("Add Book");
-        addButton.setOnAction(e -> showAddBookDialog());
+        Button addToCartButton = new Button("Add to Cart");
+        addToCartButton.setOnAction(e -> handleAddToCart());
 
-        Button removeButton = new Button("Remove Book");
-        removeButton.setOnAction(e -> removeSelectedBook());
+        Button viewCartButton = new Button("View Cart");
+        viewCartButton.setOnAction(e -> viewCart());
 
-        Button updateButton = new Button("Update Book");
-        updateButton.setOnAction(e -> showUpdateBookDialog());
-
-        controls.getChildren().addAll(searchField, searchButton, addButton, updateButton, removeButton);
+        controls.getChildren().addAll(searchField, searchButton, addToCartButton, viewCartButton);
         return controls;
     }
 
-    private void loadTableColumns() {
+    private void viewCart() {
+        CartUI cartUI = new CartUI();
+        Stage cartStage = new Stage();
+        cartUI.start(cartStage);
+    }
+
+    private void configureTable(TableView<?> table, double height) {
+        table.setPrefHeight(height);
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+    }
+
+    private void loadBookTableColumns() {
         TableColumn<Book, Integer> idColumn = new TableColumn<>("ID");
-        idColumn.setCellValueFactory(param -> new SimpleIntegerProperty(param.getValue().getId()).asObject());
+        idColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getId()));
 
         TableColumn<Book, String> titleColumn = new TableColumn<>("Title");
-        titleColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getTitle()));
+        titleColumn.setCellValueFactory(param -> param.getValue().titleProperty());
 
         TableColumn<Book, String> authorColumn = new TableColumn<>("Author");
-        authorColumn.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().getAuthor()));
+        authorColumn.setCellValueFactory(param -> param.getValue().authorProperty());
 
         TableColumn<Book, Double> priceColumn = new TableColumn<>("Price");
-        priceColumn.setCellValueFactory(param -> new SimpleDoubleProperty(param.getValue().getPrice()).asObject());
+        priceColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getPrice()));
 
         TableColumn<Book, Integer> stockColumn = new TableColumn<>("Stock");
-        stockColumn.setCellValueFactory(param -> new SimpleIntegerProperty(param.getValue().getStock()).asObject());
+        stockColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getStock()));
 
         bookTable.getColumns().addAll(idColumn, titleColumn, authorColumn, priceColumn, stockColumn);
     }
+
     private void loadBooks() {
-        bookData.clear();
-        bookData.addAll(bookServiceProxy.viewAllBooks());
-        bookTable.setItems(bookData);
+        try {
+            bookData.clear();
+            bookData.addAll(bookServiceProxy.viewAllBooks());
+            bookTable.setItems(bookData);
+        } catch (Exception e) {
+            showAlert(Alert.AlertType.ERROR, "Error", ERROR_LOADING_BOOKS + " " + e.getMessage());
+        }
     }
 
     private void searchBooks(String keyword) {
-        bookData.clear();
-        bookData.addAll(bookServiceProxy.searchBooks(keyword));
-        bookTable.setItems(bookData);
-    }
+        if (keyword.isEmpty()) {
+            showAlert(Alert.AlertType.WARNING, "Invalid Input", "Search term cannot be empty.");
+            return;
+        }
 
-    private void showAddBookDialog() {
-        Dialog<Book> dialog = new Dialog<>();
-        dialog.setTitle("Add Book");
+        try {
+            bookData.clear();
+            bookData.addAll(bookServiceProxy.searchBooks(keyword));
+            bookTable.setItems(bookData);
 
-        GridPane grid = new GridPane();
-        grid.setHgap(10);
-        grid.setVgap(10);
-        grid.setPadding(new Insets(20));
-
-        TextField titleField = new TextField();
-        titleField.setPromptText("Title");
-
-        TextField authorField = new TextField();
-        authorField.setPromptText("Author");
-
-        TextField priceField = new TextField();
-        priceField.setPromptText("Price");
-
-        TextField stockField = new TextField();
-        stockField.setPromptText("Stock");
-
-        grid.add(new Label("Title:"), 0, 0);
-        grid.add(titleField, 1, 0);
-        grid.add(new Label("Author:"), 0, 1);
-        grid.add(authorField, 1, 1);
-        grid.add(new Label("Price:"), 0, 2);
-        grid.add(priceField, 1, 2);
-        grid.add(new Label("Stock:"), 0, 3);
-        grid.add(stockField, 1, 3);
-
-        dialog.getDialogPane().setContent(grid);
-        ButtonType saveButton = new ButtonType("Save", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(saveButton, ButtonType.CANCEL);
-
-        dialog.setResultConverter(button -> {
-            if (button == saveButton) {
-                return new Book(titleField.getText(), authorField.getText(),
-                        Double.parseDouble(priceField.getText()), Integer.parseInt(stockField.getText()),
-                        "General", 0, "1st Edition", "");
+            if (bookData.isEmpty()) {
+                showAlert(Alert.AlertType.INFORMATION, "No Results", "No books found for the search term: " + keyword);
             }
-            return null;
-        });
-
-        dialog.showAndWait().ifPresent(book -> {
-            bookServiceProxy.addBook(book);
-            loadBooks();
-        });
-    }
-
-    private void removeSelectedBook() {
-        Book selectedBook = bookTable.getSelectionModel().getSelectedItem();
-        if (selectedBook != null) {
-            bookServiceProxy.removeBookById(selectedBook.getId());
-            loadBooks();
-        } else {
-            showAlert("No Book Selected", "Please select a book to remove.", Alert.AlertType.WARNING);
+        } catch (Exception e) {
+            showAlert(Alert.AlertType.ERROR, "Error", ERROR_SEARCH_BOOKS + " " + e.getMessage());
         }
     }
 
-    private void showUpdateBookDialog() {
+    private void handleAddToCart() {
         Book selectedBook = bookTable.getSelectionModel().getSelectedItem();
-        if (selectedBook != null) {
-            // Similar to showAddBookDialog, pre-fill fields with `selectedBook` values
-        } else {
-            showAlert("No Book Selected", "Please select a book to update.", Alert.AlertType.WARNING);
+        if (selectedBook == null) {
+            showAlert(Alert.AlertType.WARNING, "No Book Selected", "Please select a book to add to cart.");
+            return;
+        }
+
+        TextInputDialog dialog = new TextInputDialog("1");
+        dialog.setTitle("Add to Cart");
+        dialog.setHeaderText("Enter quantity for: " + selectedBook.getTitle());
+        dialog.setContentText("Quantity:");
+
+        dialog.showAndWait().ifPresent(quantityStr -> processAddToCart(selectedBook, quantityStr));
+    }
+
+    private void processAddToCart(Book selectedBook, String quantityStr) {
+        try {
+            int quantity = Integer.parseInt(quantityStr);
+
+            if (quantity <= 0 || quantity > selectedBook.getStock()) {
+                showAlert(Alert.AlertType.ERROR, "Invalid Quantity", ALERT_INVALID_QUANTITY);
+                return;
+            }
+
+            cartService.addBookToCart(selectedBook.getId(), selectedBook.getTitle(), quantity, selectedBook.getPrice());
+            selectedBook.setStock(selectedBook.getStock() - quantity);
+            refreshUI();
+        } catch (NumberFormatException e) {
+            showAlert(Alert.AlertType.ERROR, "Invalid Input", "Please enter a valid number.");
         }
     }
 
-    private void showAlert(String title, String content, Alert.AlertType type) {
-        Alert alert = new Alert(type);
+    private void refreshUI() {
+        loadBooks();
+    }
+
+    private void loadCart() {
+        cartData.clear();
+        cartData.addAll(cartService.getCartItems());
+        cartTable.setItems(cartData);
+    }
+
+    private void showAlert(Alert.AlertType alertType, String title, String message) {
+        Alert alert = new Alert(alertType);
         alert.setTitle(title);
-        alert.setContentText(content);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
         alert.showAndWait();
     }
 }
