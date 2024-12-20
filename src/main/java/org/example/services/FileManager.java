@@ -9,9 +9,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FileManager {
-    private static final String FILE_PATH = "src/main/resources/books.txt";
+    private static final String FILE_PATH = "src/main/resources/books.txt"; // Moved to project root for simplicity
 
-    // Loads books from the file and returns a list of books
     public List<Book> loadBooksFromFile() {
         List<Book> books = new ArrayList<>();
         int maxId = 0;
@@ -35,24 +34,20 @@ public class FileManager {
                         books.add(new Book(id, title, author, price, stock, category, popularity, edition, coverImage));
                         maxId = Math.max(maxId, id);
                     } catch (NumberFormatException e) {
-                        // Log error and continue processing next line
-                        System.err.println("Invalid number format for line: " + line);
+                        logError("Invalid number format in line: " + line, e);
                     }
                 } else {
-                    // Invalid format, log this line and continue
-                    System.err.println("Invalid book format (should have 9 fields): " + line);
+                    logError("Invalid book format: " + line, null);
                 }
             }
         } catch (IOException e) {
-            System.err.println("Error reading books file: " + e.getMessage());
+            logError("Error reading books file", e);
         }
 
-        // Ensure the ID counter is set to the next available ID
         Book.setIdCounter(maxId + 1);
         return books;
     }
 
-    // Saves the current list of books to the file
     public void saveBooksToFile(List<Book> books) {
         try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(FILE_PATH))) {
             for (Book book : books) {
@@ -62,7 +57,14 @@ public class FileManager {
                         book.getEdition(), book.getCoverImage()));
             }
         } catch (IOException e) {
-            System.err.println("Error writing books to file: " + e.getMessage());
+            logError("Error writing books to file", e);
+        }
+    }
+
+    private void logError(String message, Exception e) {
+        System.err.println(message);
+        if (e != null) {
+            e.printStackTrace();
         }
     }
 }

@@ -1,2 +1,2 @@
 id=1,customerId=1,status=PENDING,dateTime=2024-12-20T19:35:16.4401437,totalAmount=21.00,deliveryAddress=cairo
-id=2,customerId=1,status=PENDING,dateTime=2024-12-20T19:35:39.5213647,totalAmount=21.00,deliveryAddress=cairo
+id=2,customerId=1,status=CONFIRMED,dateTime=2024-12-20T19:35:39.5213647,totalAmount=21.00,deliveryAddress=cairo

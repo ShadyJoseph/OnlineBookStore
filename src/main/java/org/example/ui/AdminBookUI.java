@@ -116,11 +116,14 @@ public class AdminBookUI {
         dialog.showAndWait().ifPresent(updatedBook -> {
             try {
                 validateBookDetails(updatedBook);
-                boolean updated = bookService.updateBook(updatedBook);
+                boolean updated = bookServiceProxy.updateBook(updatedBook);
+
                 if (updated) {
                     showSuccessMessage("Book updated successfully.");
-                    refreshUIWithFeedback();
+                    refreshUI(); // Reload the UI with updated data
                 } else {
+                    // Added debug information
+                    System.err.println("Update failed. Updated Book ID: " + updatedBook.getId());
                     showErrorMessage("Failed to update the book. Make sure the book exists.");
                 }
             } catch (IllegalArgumentException e) {
@@ -130,7 +133,6 @@ public class AdminBookUI {
             }
         });
     }
-
 
 
     // Validate Book Details
