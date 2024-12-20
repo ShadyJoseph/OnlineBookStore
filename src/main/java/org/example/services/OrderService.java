@@ -149,7 +149,10 @@ public class OrderService {
                 order.getDeliveryAddress()
         );
     }
-
+    // New method added to resolve the issue
+    public List<Order> getAllOrders() {
+        return new ArrayList<>(orders); // Return a copy of the orders list to avoid external modification
+    }
     public List<Order> getOrdersByCustomerId(int customerId) {
         return orders.stream()
                 .filter(order -> order.getCustomerId() == customerId)

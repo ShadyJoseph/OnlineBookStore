@@ -1,8 +1,6 @@
 package org.example.services;
 
 import org.example.enums.UserRole;
-import org.example.models.Admin;
-import org.example.models.Customer;
 import org.example.models.User;
 import org.example.models.UserFactory;
 import org.example.utils.HashUtil;
@@ -90,8 +88,9 @@ public class UserService {
         }
     }
 
-    public synchronized User signUp(String username, String password, String address, String phone) {
-        if (!validateSignUpData(username, password, address, phone)) return null;  // Return null if validation fails
+    // Overloaded signUp for Admin (does not require address and phone)
+    public synchronized User signUp(String username, String password) {
+        if (!validateUserSignUpData(username, password)) return null;  // Common validation for username and password
 
         if (isUsernameTaken(username)) {
             LOGGER.log(Level.WARNING, "Attempt to sign up with an existing username: {0}", username);
@@ -99,7 +98,23 @@ public class UserService {
         }
 
         String hashedPassword = HashUtil.hashPassword(password);
-        // Assuming "CUSTOMER" role for signUp
+        User newUser = UserFactory.createUser(userIdCounter.getAndIncrement(), username, hashedPassword, UserRole.ADMIN, null, null); // Admin has no address and phone
+        users.add(newUser);  // Add the new user to the list
+        saveUsersToFile();
+        return newUser;  // Return the created User object
+    }
+
+    // Overloaded signUp for Customer (requires address and phone)
+    public synchronized User signUp(String username, String password, String address, String phone) {
+        if (!validateUserSignUpData(username, password)) return null;  // Common validation for username and password
+        if (!validateCustomerSignUpData(address, phone)) return null;  // Customer-specific validation for address and phone
+
+        if (isUsernameTaken(username)) {
+            LOGGER.log(Level.WARNING, "Attempt to sign up with an existing username: {0}", username);
+            return null;  // Return null if username is taken
+        }
+
+        String hashedPassword = HashUtil.hashPassword(password);
         User newUser = UserFactory.createUser(userIdCounter.getAndIncrement(), username, hashedPassword, UserRole.CUSTOMER, address, phone);
         users.add(newUser);  // Add the new user to the list
         saveUsersToFile();
@@ -108,22 +123,28 @@ public class UserService {
 
 
 
+
+
     public synchronized User logIn(String username, String password) {
+        // Search for a user by username and verify the password using bcrypt
         Optional<User> user = users.stream()
                 .filter(u -> u.getUsername().equals(username) && HashUtil.verifyPassword(password, u.getPassword()))
                 .findFirst();
         if (user.isEmpty()) {
-            LOGGER.log(Level.INFO, "Failed login attempt for username: {0}", username);
+            LOGGER.log(Level.INFO, "Failed login attempt for username: {0}", username);  // Logging failed attempt
         }
-        return user.orElse(null);
+        return user.orElse(null);  // Return user if found, otherwise null
     }
+
 
     public synchronized void displayAllUsers() {
         users.forEach(System.out::println);
     }
 
     // Helper Methods
-    private boolean validateSignUpData(String username, String password, String address, String phone) {
+
+    // Centralized validation for common fields (username, password)
+    private boolean validateUserSignUpData(String username, String password) {
         if (!ValidationUtil.isValidUsername(username)) {
             LOGGER.log(Level.WARNING, "Invalid username: {0}", username);
             return false;
@@ -132,16 +153,22 @@ public class UserService {
             LOGGER.log(Level.WARNING, "Invalid password for username: {0}", username);
             return false;
         }
+        return true;
+    }
+
+    // Validation for Customer-specific fields (address and phone)
+    private boolean validateCustomerSignUpData(String address, String phone) {
         if (!ValidationUtil.isValidAddress(address)) {
-            LOGGER.log(Level.WARNING, "Invalid address for username: {0}", username);
+            LOGGER.log(Level.WARNING, "Invalid address");
             return false;
         }
         if (!ValidationUtil.isValidPhone(phone)) {
-            LOGGER.log(Level.WARNING, "Invalid phone for username: {0}", username);
+            LOGGER.log(Level.WARNING, "Invalid phone");
             return false;
         }
         return true;
     }
+
 
     private boolean isUsernameTaken(String username) {
         return users.stream().anyMatch(u -> u.getUsername().equals(username));

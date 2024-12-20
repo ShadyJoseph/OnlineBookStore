@@ -1,1 +1,6 @@
-[ ]
+[ {
+  "bookId" : 5,
+  "bookName" : "test",
+  "quantity" : 1,
+  "price" : 20.0
+} ]

@@ -6,6 +6,7 @@ import javafx.scene.layout.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.stage.Stage;
+import org.example.enums.UserRole;
 import org.example.models.User;
 import org.example.services.UserService;
 
@@ -55,22 +56,34 @@ public class UserUI {
         return layout;
     }
 
+
     private void handleLogin(TextField usernameField, PasswordField passwordField) {
+        System.out.println("Button clicked");  // Check if button is clicked (debugging)
+
+        // Get the text entered in the username and password fields
         String username = usernameField.getText().trim();
         String password = passwordField.getText().trim();
 
+        // Check if the fields are empty and display an alert
         if (username.isEmpty() || password.isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "Login Error", "Username and Password are required.");
             return;
         }
 
+        // Call the logIn method from the user service
         User user = userService.logIn(username, password);
+
+        // If user is found, handle role-based UI redirection
         if (user != null) {
             this.customerId = user.getId();  // Store the customerId
-            showAlert(Alert.AlertType.INFORMATION, "Success", "Login Successful!");
-            loadBookUI();
+            if (user.getRole() == UserRole.ADMIN) {  // Correctly comparing the enum value
+                loadAdminUI();  // Load admin UI
+            } else if (user.getRole() == UserRole.CUSTOMER) {  // Correctly comparing the enum value
+                showAlert(Alert.AlertType.INFORMATION, "Success", "Login Successful!");  // Show success alert
+                loadBookUI();  // Load customer UI
+            }
         } else {
-            showAlert(Alert.AlertType.ERROR, "Login Failed", "Invalid credentials. Try again.");
+            showAlert(Alert.AlertType.ERROR, "Login Failed", "Invalid credentials. Try again.");  // Show error alert
         }
     }
 
@@ -154,6 +167,15 @@ public class UserUI {
         alert.setTitle(title);
         alert.showAndWait();
     }
+
+    private void loadAdminUI() {
+        AdminBookUI adminBookUI = new AdminBookUI();  // Create an instance of AdminBookUI
+        VBox adminBookLayout = adminBookUI.createMainLayout();  // Create the layout for AdminBookUI
+        Scene adminBookScene = new Scene(adminBookLayout, 800, 600);  // Create a scene for AdminBookUI
+        stage.setScene(adminBookScene);  // Set the scene to the AdminBookUI
+        stage.setTitle("Admin - Book Management System");  // Set the title
+    }
+
 
     private void clearFields(TextField... fields) {
         for (TextField field : fields) {

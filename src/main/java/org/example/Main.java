@@ -1,26 +1,30 @@
 package org.example;
 
-import org.example.services.BookServiceProxy;
-import org.example.models.Book;
+import org.example.models.User;
+import org.example.services.UserService;
 
 public class Main {
     public static void main(String[] args) {
-        // Test book-related functionality
-        testBookService();
-    }
+        UserService userService = new UserService();
 
-    private static void testBookService() {
-        BookServiceProxy bookService = new BookServiceProxy();
+        // Create Admin user
+        User adminUser = userService.signUp("joseph", "Joseph123!");
+        if (adminUser != null) {
+            System.out.println("Admin user created: " + adminUser);
+        } else {
+            System.out.println("Failed to create Admin user.");
+        }
 
-        // Load and display books lazily
-        System.out.println("All Books: " + bookService.viewAllBooks());
+        // Create Customer user
+        User customerUser = userService.signUp("customerUsername", "customerPassword!", "123 Street, City", "1234567890");
+        if (customerUser != null) {
+            System.out.println("Customer user created: " + customerUser);
+        } else {
+            System.out.println("Failed to create Customer user.");
+        }
 
-        // Add new books
-        bookService.addBook(new Book("Java", "Shady", 50.0, 10, "Programming", 5, "3rd Edition", "image.jpg"));
-        bookService.addBook(new Book("C++", "Youssef", 60.0, 10, "Programming", 5, "3rd Edition", "image.jpg"));
-        bookService.addBook(new Book("JavaScript", "Afsha", 70.0, 10, "Programming", 5, "3rd Edition", "image.jpg"));
-
-        // Search books
-        System.out.println("Search Results: " + bookService.searchBooks("java"));
+        // Optionally, display all users after creation
+        System.out.println("All Users:");
+        userService.displayAllUsers();
     }
 }

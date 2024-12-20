@@ -27,4 +27,9 @@ public class Customer extends User {
     public String toFileString() {
         return getId() + "," + getUsername() + "," + getPassword() + ",CUSTOMER," + address + "," + phone;
     }
+
+    @Override
+    public String toString() {
+        return super.toString() + ", address='" + address + '\'' + ", phone='" + phone + '\'' + '}';
+    }
 }
