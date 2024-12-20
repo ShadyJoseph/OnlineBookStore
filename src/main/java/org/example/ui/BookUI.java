@@ -4,15 +4,18 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.example.models.Book;
 import org.example.models.CartItem;
 import org.example.models.Order;
+import org.example.models.Review;
 import org.example.services.BookServiceProxy;
 import org.example.services.CartService;
 import org.example.services.OrderService;
+import org.example.services.ReviewService;  // Assuming ReviewService exists to fetch reviews
 
 import java.util.List;
 
@@ -24,6 +27,7 @@ public class BookUI {
 
     private final BookServiceProxy bookServiceProxy = new BookServiceProxy();
     private final CartService cartService = new CartService();
+    private final ReviewService reviewService = new ReviewService();  // Assuming this service exists
 
     private final TableView<Book> bookTable = new TableView<>();
     private final TableView<CartItem> cartTable = new TableView<>();
@@ -35,6 +39,66 @@ public class BookUI {
     public BookUI(int customerId) {
         this.customerId = customerId;
     }
+
+
+    private void openReviewDialog(Book selectedBook, int customerId) {
+        // Create the review dialog
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Add Review");
+        dialog.setHeaderText("Review for " + selectedBook.getTitle());
+
+        // Create dialog content (TextArea for review and ComboBox for rating)
+        VBox content = new VBox(10);
+        content.setPadding(new Insets(10));
+
+        // TextArea for the review text
+        TextArea reviewTextArea = new TextArea();
+        reviewTextArea.setPromptText("Write your review here...");
+        reviewTextArea.setWrapText(true);
+        reviewTextArea.setMaxHeight(100);
+
+        // ComboBox for the rating (1 to 5 stars)
+        ComboBox<Integer> ratingComboBox = new ComboBox<>();
+        ratingComboBox.getItems().addAll(1, 2, 3, 4, 5);
+        ratingComboBox.setPromptText("Rating (1-5)");
+
+        content.getChildren().addAll(new Label("Your Review:"), reviewTextArea, new Label("Rating:"), ratingComboBox);
+
+        // Set the dialog's content
+        dialog.getDialogPane().setContent(content);
+
+        // Add the dialog's buttons
+        ButtonType submitButtonType = new ButtonType("Submit", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(submitButtonType, ButtonType.CANCEL);
+
+        // Handle the submit button
+        dialog.setResultConverter(buttonType -> {
+            if (buttonType == submitButtonType) {
+                String reviewText = reviewTextArea.getText().trim();
+                Integer rating = ratingComboBox.getValue();
+
+                if (reviewText.isEmpty() || rating == null) {
+                    showAlert(Alert.AlertType.WARNING, "Invalid Input", "Please fill out both the review and rating.");
+                    return null;
+                }
+
+                try {
+                    // Call the addReview method with individual parameters
+                    reviewService.addReview(selectedBook.getId(), customerId, reviewText, rating);
+                    showAlert(Alert.AlertType.INFORMATION, "Success", "Your review has been added.");
+                    refreshUI();  // Refresh UI to show the new review
+                } catch (Exception e) {
+                    showAlert(Alert.AlertType.ERROR, "Error", "Failed to submit review: " + e.getMessage());
+                }
+            }
+            return null;
+        });
+
+        dialog.showAndWait();
+    }
+
+
+
 
     public VBox createMainLayout() {
         VBox mainLayout = new VBox(15);
@@ -52,53 +116,47 @@ public class BookUI {
         mainLayout.getChildren().addAll(titleLabel, controls, bookTable);
         return mainLayout;
     }
+
     private Label createTitleLabel(String text) {
         Label label = new Label(text);
         label.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
         return label;
     }
 
-     private HBox createControls() {
-         HBox controls = new HBox(10);
-         controls.setPadding(new Insets(10, 0, 10, 0));
+    private HBox createControls() {
+        HBox controls = new HBox(10);
+        controls.setPadding(new Insets(10, 0, 10, 0));
 
-         TextField searchField = new TextField();
-         searchField.setPromptText("Search by title or author");
+        TextField searchField = new TextField();
+        searchField.setPromptText("Search by title or author");
 
-         Button searchButton = new Button("Search");
-         searchButton.setOnAction(e -> searchBooks(searchField.getText().trim()));
+        Button searchButton = new Button("Search");
+        searchButton.setOnAction(e -> searchBooks(searchField.getText().trim()));
 
-         Button addToCartButton = new Button("Add to Cart");
-         addToCartButton.setOnAction(e -> handleAddToCart());
+        Button addToCartButton = new Button("Add to Cart");
+        addToCartButton.setOnAction(e -> handleAddToCart());
 
-         Button viewCartButton = new Button("View Cart");
-         viewCartButton.setOnAction(e -> viewCart());
+        Button viewCartButton = new Button("View Cart");
+        viewCartButton.setOnAction(e -> viewCart());
 
-         // New "View Orders" button
-         Button viewOrdersButton = new Button("View Orders");
-         viewOrdersButton.setOnAction(e -> viewOrders());
+        // New "View Orders" button
+        Button viewOrdersButton = new Button("View Orders");
+        viewOrdersButton.setOnAction(e -> viewOrders());
 
-         controls.getChildren().addAll(searchField, searchButton, addToCartButton, viewCartButton, viewOrdersButton);
-         return controls;
-     }
+        controls.getChildren().addAll(searchField, searchButton, addToCartButton, viewCartButton, viewOrdersButton);
+        return controls;
+    }
 
     private void viewOrders() {
-        // Initialize OrderService to load orders
         OrderService orderService = new OrderService();
-
-        // Create OrderUI with customerId and orderService
         OrderUI orderUI = new OrderUI(customerId, orderService);
-
-        // Open the OrderUI in a new Stage
         Stage orderStage = new Stage();
         orderUI.start(orderStage);
     }
 
-
     private void viewCart() {
-        // Assuming you have a customerId variable available here.
         int customerId = getCustomerId();  // Replace with actual method to get customerId.
-        CartUI cartUI = new CartUI(customerId);  // Pass the customerId to CartUI.
+        CartUI cartUI = new CartUI(customerId);
         Stage cartStage = new Stage();
         cartUI.start(cartStage);
     }
@@ -124,7 +182,52 @@ public class BookUI {
         TableColumn<Book, Integer> stockColumn = new TableColumn<>("Stock");
         stockColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getStock()));
 
-        bookTable.getColumns().addAll(idColumn, titleColumn, authorColumn, priceColumn, stockColumn);
+        // Add a column for the "View Reviews" button
+        TableColumn<Book, Void> reviewColumn = new TableColumn<>("Reviews");
+        reviewColumn.setCellFactory(param -> new TableCell<>() {
+            private final Button viewReviewButton = new Button("View Reviews");
+
+            {
+                viewReviewButton.setOnAction(e -> {
+                    Book selectedBook = getTableView().getItems().get(getIndex());
+                    viewReviewsForBook(selectedBook.getId());  // Show reviews for the selected book
+                });
+            }
+
+            @Override
+            public void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(viewReviewButton);
+                }
+            }
+        });
+
+        TableColumn<Book, Void> addReviewColumn = new TableColumn<>("Add Review");
+        addReviewColumn.setCellFactory(param -> new TableCell<>() {
+            private final Button addReviewButton = new Button("Add Review");
+
+            {
+                addReviewButton.setOnAction(e -> {
+                    Book selectedBook = getTableView().getItems().get(getIndex());
+                    openReviewDialog(selectedBook,customerId);  // Open the review dialog to add a new review
+                });
+            }
+
+            @Override
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty) {
+                    setGraphic(null);
+                } else {
+                    setGraphic(addReviewButton);
+                }
+            }
+        });
+
+        bookTable.getColumns().addAll(idColumn, titleColumn, authorColumn, priceColumn, stockColumn, reviewColumn, addReviewColumn);
     }
 
     private void loadBooks() {
@@ -202,7 +305,47 @@ public class BookUI {
     }
 
     private int getCustomerId() {
-        // Replace with actual method to get the customer ID (e.g., from session, login state, etc.)
         return 1; // Example customer ID
+    }
+
+    // Method to open a new window with the reviews for a selected book
+    private void viewReviewsForBook(int bookId) {
+        try {
+            List<Review> reviews = reviewService.getReviewsForBook(bookId);  // Fetch reviews for the book
+            if (reviews.isEmpty()) {
+                showAlert(Alert.AlertType.INFORMATION, "No Reviews", "No reviews found for this book.");
+                return;
+            }
+
+            // Create a new window to display reviews
+            VBox reviewLayout = new VBox(10);
+            reviewLayout.setPadding(new Insets(10));
+            reviewLayout.getChildren().add(new Label("Reviews:"));
+
+            // Iterate through reviews and add to the layout
+            for (Review review : reviews) {
+                VBox reviewBox = new VBox(5);  // To group review info (text, rating)
+                reviewBox.setPadding(new Insets(5));
+
+                // Add review content and rating
+                Label reviewTextLabel = new Label("Review: " + review.getReviewText());
+                Label ratingLabel = new Label("Rating: " + review.getRating() + "/5");
+
+                // Add labels to the reviewBox
+                reviewBox.getChildren().addAll(reviewTextLabel, ratingLabel);
+                reviewLayout.getChildren().add(reviewBox);
+            }
+
+            // Create and configure the review window
+            Stage reviewStage = new Stage();
+            reviewStage.setTitle("Reviews for Book");
+            reviewStage.setScene(new Scene(reviewLayout, 400, 300));  // Adjust the size as needed
+            reviewStage.show();
+
+        } catch (Exception e) {
+            // Log or print the stack trace for detailed error info
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Error", "Failed to load reviews for this book.");
+        }
     }
 }

@@ -1,5 +1,6 @@
 package org.example.ui;
 
+import javafx.application.Platform;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -28,6 +29,7 @@ public class AdminBookUI {
 
     public AdminBookUI() {}
 
+    // Main Layout Creation
     public VBox createMainLayout() {
         VBox mainLayout = new VBox(15);
         mainLayout.setPadding(new Insets(15));
@@ -43,12 +45,7 @@ public class AdminBookUI {
         return mainLayout;
     }
 
-    private Label createTitleLabel(String text) {
-        Label label = new Label(text);
-        label.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
-        return label;
-    }
-
+    // Control Setup
     private HBox createAdminControls() {
         HBox controls = new HBox(10);
         controls.setPadding(new Insets(10, 0, 10, 0));
@@ -75,54 +72,20 @@ public class AdminBookUI {
         return controls;
     }
 
-
-
-    private void viewOrders() {
-        OrderService orderService = new OrderService();
-        AdminOrderUI adminOrderUI = new AdminOrderUI(orderService);
-        Stage orderStage = new Stage();
-        adminOrderUI.start(orderStage);
+    // Title Label Creation
+    private Label createTitleLabel(String text) {
+        Label label = new Label(text);
+        label.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
+        return label;
     }
 
-    private void updateBook() {
-        Book selectedBook = bookTable.getSelectionModel().getSelectedItem();
-        if (selectedBook == null) {
-            showWarningMessage("No Book Selected", "Please select a book to update.");
-            return;
-        }
-
-        BookUpdateDialog dialog = new BookUpdateDialog(selectedBook);
-        dialog.showAndWait().ifPresent(updatedBook -> {
-            try {
-                validateBookDetails(updatedBook);
-                boolean updated = bookService.updateBook(updatedBook);
-                if (updated) {
-                    showSuccessMessage("Book updated successfully.");
-                    refreshUIWithFeedback();
-                } else {
-                    showErrorMessage("Failed to update the book. Ensure the book exists.");
-                }
-            } catch (Exception e) {
-                showErrorMessage("Failed to update book: " + e.getMessage());
-            }
-        });
-    }
-
-
-    private void validateBookDetails(Book book) throws IllegalArgumentException {
-        if (book.getPrice() <= 0) {
-            throw new IllegalArgumentException("Price must be greater than zero.");
-        }
-        if (book.getStock() < 0) {
-            throw new IllegalArgumentException("Stock must be a positive integer.");
-        }
-    }
-
+    // Table Configuration
     private void configureTable(TableView<?> table, double height) {
         table.setPrefHeight(height);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
     }
 
+    // Column Setup for the TableView
     private void loadBookTableColumns() {
         TableColumn<Book, Integer> idColumn = new TableColumn<>("ID");
         idColumn.setCellValueFactory(param -> new SimpleObjectProperty<>(param.getValue().getId()));
@@ -142,6 +105,100 @@ public class AdminBookUI {
         bookTable.getColumns().addAll(idColumn, titleColumn, authorColumn, priceColumn, stockColumn);
     }
 
+    private void updateBook() {
+        Book selectedBook = bookTable.getSelectionModel().getSelectedItem();
+        if (selectedBook == null) {
+            showWarningMessage("No Book Selected", "Please select a book to update.");
+            return;
+        }
+
+        BookUpdateDialog dialog = new BookUpdateDialog(selectedBook);
+        dialog.showAndWait().ifPresent(updatedBook -> {
+            try {
+                validateBookDetails(updatedBook);
+                boolean updated = bookService.updateBook(updatedBook);
+                if (updated) {
+                    showSuccessMessage("Book updated successfully.");
+                    refreshUIWithFeedback();
+                } else {
+                    showErrorMessage("Failed to update the book. Make sure the book exists.");
+                }
+            } catch (IllegalArgumentException e) {
+                showErrorMessage("Failed to update book: " + e.getMessage());
+            } catch (Exception e) {
+                showErrorMessage("An error occurred: " + e.getMessage());
+            }
+        });
+    }
+
+
+
+    // Validate Book Details
+    private void validateBookDetails(Book book) throws IllegalArgumentException {
+        if (book.getPrice() <= 0) {
+            throw new IllegalArgumentException("Price must be greater than zero.");
+        }
+        if (book.getStock() < 0) {
+            throw new IllegalArgumentException("Stock must be a positive integer.");
+        }
+    }
+
+    // Book Search
+    private void searchBooks(String keyword) {
+        if (keyword.isEmpty()) {
+            refreshUI();
+            return;
+        }
+
+        try {
+            List<Book> result = bookServiceProxy.searchBooks(keyword);
+            if (result.isEmpty()) {
+                showInfoMessage("No Results", "No books found for the given search.");
+            } else {
+                bookData.setAll(result);
+            }
+        } catch (Exception e) {
+            showErrorMessage(ERROR_SEARCH_BOOKS);
+        }
+    }
+
+    private void refreshUIWithFeedback() {
+        // Set a loading placeholder (consider adding a spinner instead of text for a better UX)
+        bookTable.setPlaceholder(new Label("Loading books, please wait..."));
+
+        // Fetch updated book data asynchronously to prevent UI blocking
+        new Thread(() -> {
+            try {
+                // Fetch updated book data
+                List<Book> books = bookServiceProxy.viewAllBooks();
+
+                // Update the observable list on the JavaFX Application Thread (UI thread)
+                Platform.runLater(() -> {
+                    // Update the observable list
+                    bookData.setAll(books);
+
+                    // Set the updated list to the table
+                    bookTable.setItems(bookData);
+
+                    // Update the placeholder to indicate the results
+                    if (books.isEmpty()) {
+                        bookTable.setPlaceholder(new Label("No books available."));
+                    } else {
+                        bookTable.setPlaceholder(new Label("")); // Clear the placeholder if books are loaded
+                    }
+                });
+            } catch (Exception e) {
+                // Handle error and update UI with an error message
+                Platform.runLater(() -> {
+                    bookTable.setPlaceholder(new Label("Failed to load books."));
+                    showErrorMessage(ERROR_LOADING_BOOKS + "\n" + e.getMessage());
+                });
+            }
+        }).start(); // Start the background thread for fetching data
+    }
+
+
+    // Refresh UI initially
     private void refreshUI() {
         try {
             // Clear existing data
@@ -164,32 +221,7 @@ public class AdminBookUI {
         }
     }
 
-    private void refreshUIWithFeedback() {
-        try {
-            // Clear the table and show a loading placeholder
-            bookTable.setPlaceholder(new Label("Loading books, please wait..."));
-
-            // Fetch updated book data
-            List<Book> books = bookServiceProxy.viewAllBooks();
-
-            // Update the observable list
-            bookData.setAll(books);
-
-            // Set the updated list to the table
-            bookTable.setItems(bookData);
-
-            // Clear the placeholder after loading
-            if (books.isEmpty()) {
-                bookTable.setPlaceholder(new Label("No books available."));
-            }
-
-        } catch (Exception e) {
-            bookTable.setPlaceholder(new Label("Failed to load books."));
-            showErrorMessage(ERROR_LOADING_BOOKS + "\n" + e.getMessage());
-        }
-    }
-
-    // Replace refreshUI calls with refreshUIWithFeedback
+    // Add Book
     private void addBook() {
         BookAddDialog dialog = new BookAddDialog();
         dialog.showAndWait().ifPresent(book -> {
@@ -204,6 +236,7 @@ public class AdminBookUI {
         });
     }
 
+    // Delete Book
     private void deleteBook() {
         Book selectedBook = bookTable.getSelectionModel().getSelectedItem();
         if (selectedBook == null) {
@@ -233,26 +266,15 @@ public class AdminBookUI {
         });
     }
 
-
-
-    private void searchBooks(String keyword) {
-        if (keyword.isEmpty()) {
-            refreshUI();
-            return;
-        }
-
-        try {
-            List<Book> result = bookServiceProxy.searchBooks(keyword);
-            if (result.isEmpty()) {
-                showInfoMessage("No Results", "No books found for the given search.");
-            } else {
-                bookData.setAll(result);
-            }
-        } catch (Exception e) {
-            showErrorMessage(ERROR_SEARCH_BOOKS);
-        }
+    // View Orders
+    private void viewOrders() {
+        OrderService orderService = new OrderService();
+        AdminOrderUI adminOrderUI = new AdminOrderUI(orderService);
+        Stage orderStage = new Stage();
+        adminOrderUI.start(orderStage);
     }
 
+    // Alert Dialogs
     private void showSuccessMessage(String message) {
         showAlert(Alert.AlertType.INFORMATION, "Success", message);
     }

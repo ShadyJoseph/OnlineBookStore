@@ -26,17 +26,7 @@ public class Book {
         this.edition = new SimpleStringProperty(edition);
         this.coverImage = new SimpleStringProperty(coverImage);
     }
-    
-    public void updateDetails(Book updatedBook) {
-        this.setTitle(updatedBook.getTitle());
-        this.setAuthor(updatedBook.getAuthor());
-        this.setPrice(updatedBook.getPrice());
-        this.setStock(updatedBook.getStock());
-        this.setCategory(updatedBook.getCategory());
-        this.setPopularity(updatedBook.getPopularity());
-        this.setEdition(updatedBook.getEdition());
-        this.setCoverImage(updatedBook.getCoverImage());
-    }
+
     // Constructor with custom ID
     public Book(int id, String title, String author, double price, int stock, String category, int popularity, String edition, String coverImage) {
         this.id = new SimpleIntegerProperty(id);
@@ -50,7 +40,6 @@ public class Book {
         this.coverImage = new SimpleStringProperty(coverImage);
     }
 
-    // Property Getters
     public IntegerProperty idProperty() { return id; }
     public StringProperty titleProperty() { return title; }
     public StringProperty authorProperty() { return author; }
@@ -61,7 +50,7 @@ public class Book {
     public StringProperty editionProperty() { return edition; }
     public StringProperty coverImageProperty() { return coverImage; }
 
-    // Field Getters and Setters
+    // Getters and Setters
     public int getId() { return id.get(); }
     public void setId(int id) { this.id.set(id); }
     public static void setIdCounter(int newCounter) { idCounter = newCounter; }
@@ -82,7 +71,6 @@ public class Book {
     public String getCoverImage() { return coverImage.get(); }
     public void setCoverImage(String coverImage) { this.coverImage.set(coverImage); }
 
-    // Override toString() for Debugging
     @Override
     public String toString() {
         return "Book{" +
@@ -97,4 +85,16 @@ public class Book {
                 ", coverImage='" + getCoverImage() + '\'' +
                 '}';
     }
+
+    public void updateDetails(Book updatedBook) {
+        this.setTitle(updatedBook.getTitle());
+        this.setAuthor(updatedBook.getAuthor());
+        this.setPrice(updatedBook.getPrice());
+        this.setStock(updatedBook.getStock());
+        this.setCategory(updatedBook.getCategory());
+        this.setPopularity(updatedBook.getPopularity());
+        this.setEdition(updatedBook.getEdition());
+        this.setCoverImage(updatedBook.getCoverImage());
+    }
+
 }

@@ -1,7 +1,2 @@
-1,Book,The Lord of the Rings,29.99,1000,fantasy,5,3,jpg
-2,Book,Pride and Prejudice,12.99,850,romance,4,2,jpg
-3,Book,The Hitchhiker's Guide to the Galaxy,14.99,720,comedy,3,2,png
-4,Book,To Kill a Mockingbird,11.99,920,drama,4,3,jpg
-5,Book,1984,13.99,980,dystopian,4,3,png
-6,Book,The Great Gatsby,15.99,880,classic,4,2,jpg
-7,Book,The Alchemist,12.99,780,adventure,3,2,png
+1,Test1,test1,10.00,10,test1,10,test1,test1
+2,test2,test2,11.00,11,test2,11,test2,test2
