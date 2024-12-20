@@ -1,0 +1,5 @@
+orderId=1,customerId=1,status=PENDING,deliveryAddress=cairo
+orderId=2,customerId=1,status=PENDING,deliveryAddress=cairo
+orderId=3,customerId=1,status=PENDING,deliveryAddress=shady
+orderId=4,customerId=1,status=PENDING,deliveryAddress=cairo
+orderId=5,customerId=1,status=PENDING,deliveryAddress=cairo

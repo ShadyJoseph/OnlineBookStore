@@ -9,10 +9,15 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.example.models.Book;
 import org.example.models.CartItem;
+import org.example.models.Order;
 import org.example.services.BookServiceProxy;
 import org.example.services.CartService;
+import org.example.services.OrderService;
+
+import java.util.List;
 
 public class BookUI {
+    private final int customerId;  // Store the customerId
     private static final String ERROR_LOADING_BOOKS = "Failed to load books.";
     private static final String ERROR_SEARCH_BOOKS = "Failed to search books.";
     private static final String ALERT_INVALID_QUANTITY = "Please enter a valid quantity.";
@@ -25,6 +30,11 @@ public class BookUI {
 
     private final ObservableList<Book> bookData = FXCollections.observableArrayList();
     private final ObservableList<CartItem> cartData = FXCollections.observableArrayList();
+
+    // Constructor accepting customerId
+    public BookUI(int customerId) {
+        this.customerId = customerId;
+    }
 
     public VBox createMainLayout() {
         VBox mainLayout = new VBox(15);
@@ -42,35 +52,57 @@ public class BookUI {
         mainLayout.getChildren().addAll(titleLabel, controls, bookTable);
         return mainLayout;
     }
-
     private Label createTitleLabel(String text) {
         Label label = new Label(text);
         label.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
         return label;
     }
 
-    private HBox createControls() {
-        HBox controls = new HBox(10);
-        controls.setPadding(new Insets(10, 0, 10, 0));
+     private HBox createControls() {
+         HBox controls = new HBox(10);
+         controls.setPadding(new Insets(10, 0, 10, 0));
 
-        TextField searchField = new TextField();
-        searchField.setPromptText("Search by title or author");
+         TextField searchField = new TextField();
+         searchField.setPromptText("Search by title or author");
 
-        Button searchButton = new Button("Search");
-        searchButton.setOnAction(e -> searchBooks(searchField.getText().trim()));
+         Button searchButton = new Button("Search");
+         searchButton.setOnAction(e -> searchBooks(searchField.getText().trim()));
 
-        Button addToCartButton = new Button("Add to Cart");
-        addToCartButton.setOnAction(e -> handleAddToCart());
+         Button addToCartButton = new Button("Add to Cart");
+         addToCartButton.setOnAction(e -> handleAddToCart());
 
-        Button viewCartButton = new Button("View Cart");
-        viewCartButton.setOnAction(e -> viewCart());
+         Button viewCartButton = new Button("View Cart");
+         viewCartButton.setOnAction(e -> viewCart());
 
-        controls.getChildren().addAll(searchField, searchButton, addToCartButton, viewCartButton);
-        return controls;
+         // New "View Orders" button
+         Button viewOrdersButton = new Button("View Orders");
+         viewOrdersButton.setOnAction(e -> viewOrders());
+
+         controls.getChildren().addAll(searchField, searchButton, addToCartButton, viewCartButton, viewOrdersButton);
+         return controls;
+     }
+
+    private void viewOrders() {
+        // Initialize OrderService to load orders from the file
+        OrderService orderService = new OrderService();
+        List<Order> allOrders = orderService.getOrders();
+
+        if (allOrders.isEmpty()) {
+            System.out.println("No orders available to view.");
+            return;
+        }
+
+        // Display orders in a new OrderUI stage
+        OrderUI orderUI = new OrderUI(customerId, allOrders);
+
+        Stage orderStage = new Stage();
+        orderUI.start(orderStage);
     }
 
     private void viewCart() {
-        CartUI cartUI = new CartUI();
+        // Assuming you have a customerId variable available here.
+        int customerId = getCustomerId();  // Replace with actual method to get customerId.
+        CartUI cartUI = new CartUI(customerId);  // Pass the customerId to CartUI.
         Stage cartStage = new Stage();
         cartUI.start(cartStage);
     }
@@ -152,7 +184,8 @@ public class BookUI {
                 return;
             }
 
-            cartService.addBookToCart(selectedBook.getId(), selectedBook.getTitle(), quantity, selectedBook.getPrice());
+            int customerId = getCustomerId();  // Get customer ID
+            cartService.addBookToCart(customerId, selectedBook.getId(), selectedBook.getTitle(), quantity, selectedBook.getPrice());
             selectedBook.setStock(selectedBook.getStock() - quantity);
             refreshUI();
         } catch (NumberFormatException e) {
@@ -164,17 +197,16 @@ public class BookUI {
         loadBooks();
     }
 
-    private void loadCart() {
-        cartData.clear();
-        cartData.addAll(cartService.getCartItems());
-        cartTable.setItems(cartData);
-    }
-
     private void showAlert(Alert.AlertType alertType, String title, String message) {
         Alert alert = new Alert(alertType);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    private int getCustomerId() {
+        // Replace with actual method to get the customer ID (e.g., from session, login state, etc.)
+        return 1; // Example customer ID
     }
 }

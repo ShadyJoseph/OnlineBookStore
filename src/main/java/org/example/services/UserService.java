@@ -90,20 +90,22 @@ public class UserService {
         }
     }
 
-    public synchronized boolean signUp(String username, String password, String address, String phone) {
-        if (!validateSignUpData(username, password, address, phone)) return false;
+    public synchronized User signUp(String username, String password, String address, String phone) {
+        if (!validateSignUpData(username, password, address, phone)) return null;  // Return null if validation fails
 
         if (isUsernameTaken(username)) {
             LOGGER.log(Level.WARNING, "Attempt to sign up with an existing username: {0}", username);
-            return false;
+            return null;  // Return null if username is taken
         }
 
         String hashedPassword = HashUtil.hashPassword(password);
         // Assuming "CUSTOMER" role for signUp
-        users.add(UserFactory.createUser(userIdCounter.getAndIncrement(), username, hashedPassword, UserRole.CUSTOMER, address, phone));
+        User newUser = UserFactory.createUser(userIdCounter.getAndIncrement(), username, hashedPassword, UserRole.CUSTOMER, address, phone);
+        users.add(newUser);  // Add the new user to the list
         saveUsersToFile();
-        return true;
+        return newUser;  // Return the created User object
     }
+
 
 
     public synchronized User logIn(String username, String password) {

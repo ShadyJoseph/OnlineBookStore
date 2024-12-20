@@ -1,11 +1,15 @@
 package org.example.models;
 
-import java.io.*;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Cart {
-    private static final String CART_FILE = "src/main/resources/cart.txt";
+    private static final String CART_FILE = "src/main/resources/cart.json";
     private final List<CartItem> items;
 
     // The single instance of the Cart
@@ -43,8 +47,9 @@ public class Cart {
     }
 
     public void removeItem(int bookId) {
-        items.removeIf(item -> item.getBookId() == bookId);
-        saveToFile();
+        // Iterate over your cart items and remove the one matching the bookId
+        items.removeIf(item -> item.getBookId() == bookId);  // Assuming `getBookId` is the method to retrieve the book ID
+        saveToFile();  // Save the updated cart
     }
 
     public void updateQuantity(int bookId, int quantity) {
@@ -83,21 +88,22 @@ public class Cart {
     }
 
     private void saveToFile() {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(CART_FILE))) {
-            oos.writeObject(new ArrayList<>(items)); // Use a copy to avoid serialization issues
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            mapper.writerWithDefaultPrettyPrinter().writeValue(new File(CART_FILE), items);
         } catch (IOException e) {
             System.err.println("Error saving cart to file: " + e.getMessage());
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void loadFromFile() {
+        ObjectMapper mapper = new ObjectMapper();
         File file = new File(CART_FILE);
         if (file.exists()) {
-            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-                List<CartItem> loadedItems = (List<CartItem>) ois.readObject();
+            try {
+                List<CartItem> loadedItems = mapper.readValue(file, new TypeReference<List<CartItem>>() {});
                 items.addAll(loadedItems);
-            } catch (IOException | ClassNotFoundException e) {
+            } catch (IOException e) {
                 System.err.println("Error loading cart from file: " + e.getMessage());
             }
         }

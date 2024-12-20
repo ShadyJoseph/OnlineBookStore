@@ -33,7 +33,6 @@ public class OrderService {
         if (order.isPresent() && order.get().getStatus().equals(OrderStatus.PENDING.name())) {
             order.get().setStatus(OrderStatus.CONFIRMED.name());
             System.out.println("Order confirmed: " + order.get());
-            notifyCustomer(order.get().getCustomerId(), "Your order has been confirmed!");
             saveOrdersToFile(); // Save after modification
             return true;
         }
@@ -46,7 +45,6 @@ public class OrderService {
         if (order.isPresent() && !order.get().getStatus().equals(OrderStatus.DELIVERED.name())) {
             order.get().setStatus(OrderStatus.CANCELLED.name());
             System.out.println("Order cancelled: " + order.get());
-            notifyCustomer(order.get().getCustomerId(), "Your order has been cancelled.");
             saveOrdersToFile(); // Save after modification
             return true;
         }
@@ -71,17 +69,20 @@ public class OrderService {
         newOrder.calculateTotalAmount();
         orders.add(newOrder);
         System.out.println("Order placed: " + newOrder);
-        notifyCustomer(customerId, "Your order has been placed successfully!");
         saveOrdersToFile(); // Save after placing the order
         return newOrder;
     }
 
-    public void trackOrderStatus(int orderId) {
+    public List<Order> getOrders() {
+        return orders;
+    }
+
+    public String trackOrderStatus(int orderId) {
         Optional<Order> order = findOrderById(orderId);
         if (order.isPresent()) {
-            System.out.println("Order status: " + order.get().getStatus());
+            return "Order status: " + order.get().getStatus();
         } else {
-            System.out.println("Order not found.");
+            return null;  // Return null if order not found
         }
     }
 
@@ -111,26 +112,9 @@ public class OrderService {
         return false;
     }
 
-    public void leaveReview(int orderId, int customerId, String review) {
-        Optional<Order> order = findOrderById(orderId);
-        if (order.isPresent() &&
-                order.get().getCustomerId() == customerId &&
-                order.get().getStatus().equals(OrderStatus.DELIVERED.name())) {
-            System.out.println("Review submitted for order " + orderId + ": " + review);
-            // Persist review logic (placeholder)
-        } else {
-            System.out.println("Order not found, not delivered, or invalid operation.");
-        }
-    }
-
     // Private Helper Methods
     private Optional<Order> findOrderById(int orderId) {
         return orders.stream().filter(order -> order.getId() == orderId).findFirst();
-    }
-
-    private void notifyCustomer(int customerId, String message) {
-        // Placeholder: Implement notification system (e.g., email, SMS)
-        System.out.println("Notification to customer " + customerId + ": " + message);
     }
 
     private void loadOrdersFromFile() {
@@ -140,23 +124,46 @@ public class OrderService {
                 BufferedReader reader = Files.newBufferedReader(filePath);
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    // Implement order deserialization logic (from file to order objects)
-                    // For now, just log the line to verify data
-                    System.out.println("Loaded order: " + line);
+                    try {
+                        // Implement order deserialization logic (parse string into Order object)
+                        Order order = deserializeOrder(line);
+                        orders.add(order);
+                    } catch (Exception e) {
+                        System.err.println("Error parsing order line: " + line);
+                    }
                 }
             }
         } catch (IOException e) {
-            System.err.println("Error loading orders: " + e.getMessage());
+            System.err.println("Error loading orders from file: " + e.getMessage());
         }
+    }
+
+    private Order deserializeOrder(String orderString) {
+        // Simple deserialization logic, adapt according to your Order format
+        String[] parts = orderString.split(",");
+        int orderId = Integer.parseInt(parts[0].split("=")[1]);
+        int customerId = Integer.parseInt(parts[1].split("=")[1]);
+        String status = parts[2].split("=")[1];
+        String deliveryAddress = parts[3].split("=")[1];
+
+        // Here, we return a dummy list of CartItems for simplicity. This should be parsed accordingly.
+        List<CartItem> items = new ArrayList<>();  // This should be parsed as well, if needed
+
+        return new Order( customerId, LocalDateTime.now(), 0.0, items, status, deliveryAddress);
     }
 
     private void saveOrdersToFile() {
         try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(ORDERS_FILE), StandardOpenOption.CREATE)) {
             for (Order order : orders) {
-                writer.write(order.toString() + System.lineSeparator());
+                writer.write(serializeOrder(order) + System.lineSeparator());
             }
         } catch (IOException e) {
-            System.err.println("Error saving orders: " + e.getMessage());
+            System.err.println("Error saving orders to file: " + e.getMessage());
         }
+    }
+
+    private String serializeOrder(Order order) {
+        // Implement order serialization (convert Order object to string)
+        return String.format("orderId=%d,customerId=%d,status=%s,deliveryAddress=%s", order.getId(), order.getCustomerId(), order.getStatus(), order.getDeliveryAddress());
     }
 }

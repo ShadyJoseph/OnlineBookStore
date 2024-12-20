@@ -1,5 +1,6 @@
-// CartItem.java
 package org.example.models;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.io.Serializable;
 
@@ -11,6 +12,8 @@ public class CartItem implements Serializable {
     private int quantity;
     private double price;
 
+    public CartItem() {}
+
     public CartItem(int bookId, String bookName, int quantity, double price) {
         this.bookId = bookId;
         this.bookName = bookName;
@@ -18,7 +21,6 @@ public class CartItem implements Serializable {
         this.price = price;
     }
 
-    // Getters and Setters
     public int getBookId() {
         return bookId;
     }
@@ -51,6 +53,7 @@ public class CartItem implements Serializable {
         this.price = price;
     }
 
+    @JsonIgnore  // Ignore this field during deserialization
     public double getTotalPrice() {
         return price * quantity;
     }

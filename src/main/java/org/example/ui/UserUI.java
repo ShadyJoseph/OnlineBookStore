@@ -6,8 +6,6 @@ import javafx.scene.layout.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.stage.Stage;
-import org.example.models.Admin;
-import org.example.models.Customer;
 import org.example.models.User;
 import org.example.services.UserService;
 
@@ -15,6 +13,7 @@ public class UserUI {
 
     private final Stage stage;
     private final UserService userService = new UserService();
+    private int customerId;  // Store the customerId here
 
     public UserUI(Stage stage) {
         this.stage = stage;
@@ -67,6 +66,7 @@ public class UserUI {
 
         User user = userService.logIn(username, password);
         if (user != null) {
+            this.customerId = user.getId();  // Store the customerId
             showAlert(Alert.AlertType.INFORMATION, "Success", "Login Successful!");
             loadBookUI();
         } else {
@@ -75,7 +75,7 @@ public class UserUI {
     }
 
     private void loadBookUI() {
-        BookUI bookUI = new BookUI();
+        BookUI bookUI = new BookUI(customerId);  // Pass customerId to BookUI
         VBox bookLayout = bookUI.createMainLayout();
         Scene bookScene = new Scene(bookLayout, 800, 600);
         stage.setScene(bookScene);
@@ -116,7 +116,9 @@ public class UserUI {
             return;
         }
 
-        if (userService.signUp(username, password, address, phone)) {
+        User user = userService.signUp(username, password, address, phone);
+        if (user != null) {
+            this.customerId = user.getId();  // Store the customerId
             showAlert(Alert.AlertType.INFORMATION, "Success", "Sign-up successful!");
             clearFields(usernameField, passwordField, confirmPasswordField, addressField, phoneField);
         } else {

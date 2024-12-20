@@ -1,19 +1,30 @@
 package org.example.ui;
 
+
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import org.example.models.CartItem;
 import org.example.services.CartService;
+import org.example.services.OrderService;
+
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class CartUI {
     private final CartService cartService;
+    private final OrderService orderService;
     private final ListView<String> cartListView = new ListView<>();
     private final Label totalPriceLabel = new Label("Total Price: $0.0");
+    private final int customerId;
 
-    public CartUI() {
+    public CartUI(int customerId) {
         this.cartService = new CartService();
+        this.orderService = new OrderService();
+        this.customerId = customerId;
     }
 
     public void start(Stage primaryStage) {
@@ -25,12 +36,14 @@ public class CartUI {
         Button removeItemButton = new Button("Remove Item");
         Button updateItemButton = new Button("Update Quantity");
         Button clearCartButton = new Button("Clear Cart");
+        Button placeOrderButton = new Button("Place Order");
 
         removeItemButton.setOnAction(e -> removeItem());
         updateItemButton.setOnAction(e -> updateQuantity());
         clearCartButton.setOnAction(e -> clearCart());
+        placeOrderButton.setOnAction(e -> placeOrder(primaryStage));
 
-        HBox buttonLayout = new HBox(10, removeItemButton, updateItemButton, clearCartButton);
+        HBox buttonLayout = new HBox(10, removeItemButton, updateItemButton, clearCartButton, placeOrderButton);
 
         cartListView.setPrefHeight(200);
 
@@ -51,13 +64,12 @@ public class CartUI {
         }
 
         int bookId = extractBookId(selectedItem);
+        if (bookId == -1) {
+            showAlert("Error", "Unable to identify the selected item.");
+            return;
+        }
 
-        Alert confirmationAlert = new Alert(Alert.AlertType.CONFIRMATION);
-        confirmationAlert.setTitle("Remove Item");
-        confirmationAlert.setHeaderText("Are you sure you want to remove this item?");
-        confirmationAlert.setContentText(selectedItem);
-
-        if (confirmationAlert.showAndWait().filter(ButtonType.OK::equals).isPresent()) {
+        if (showConfirmationAlert("Remove Item", "Are you sure you want to remove this item?", selectedItem)) {
             cartService.removeBookFromCart(bookId);
             updateCartDisplay();
         }
@@ -71,6 +83,10 @@ public class CartUI {
         }
 
         int bookId = extractBookId(selectedItem);
+        if (bookId == -1) {
+            showAlert("Error", "Unable to identify the selected item.");
+            return;
+        }
 
         TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Update Quantity");
@@ -79,7 +95,7 @@ public class CartUI {
 
         dialog.showAndWait().ifPresent(input -> {
             try {
-                int newQuantity = Integer.parseInt(input);
+                int newQuantity = Integer.parseInt(input.trim());
                 if (newQuantity <= 0) {
                     showAlert("Invalid Quantity", "Quantity must be greater than zero.");
                 } else {
@@ -93,15 +109,34 @@ public class CartUI {
     }
 
     private void clearCart() {
-        Alert confirmationAlert = new Alert(Alert.AlertType.CONFIRMATION);
-        confirmationAlert.setTitle("Clear Cart");
-        confirmationAlert.setHeaderText("Are you sure you want to clear the cart?");
-        confirmationAlert.setContentText("This action cannot be undone.");
-
-        if (confirmationAlert.showAndWait().filter(ButtonType.OK::equals).isPresent()) {
+        if (showConfirmationAlert("Clear Cart", "Are you sure you want to clear the cart?", "This action cannot be undone.")) {
             cartService.clearCart();
             updateCartDisplay();
         }
+    }
+
+    private void placeOrder(Stage primaryStage) {
+        if (cartService.getCartItems().isEmpty()) {
+            showAlert("Empty Cart", "Your cart is empty. Add items before placing an order.");
+            return;
+        }
+
+        TextInputDialog addressDialog = new TextInputDialog();
+        addressDialog.setTitle("Delivery Address");
+        addressDialog.setHeaderText("Enter Delivery Address");
+        addressDialog.setContentText("Address:");
+
+        addressDialog.showAndWait().ifPresent(address -> {
+            try {
+                List<CartItem> items = cartService.getCartItems();
+                orderService.placeOrder(customerId, items, address);
+                cartService.clearCart();
+                updateCartDisplay();
+                showAlert("Order Placed", "Your order has been placed successfully.");
+            } catch (IllegalArgumentException e) {
+                showAlert("Order Error", e.getMessage());
+            }
+        });
     }
 
     private void updateCartDisplay() {
@@ -110,15 +145,24 @@ public class CartUI {
         totalPriceLabel.setText("Total Price: $" + cartService.calculateTotal());
     }
 
-    private int extractBookId(String cartItemString) {
-        String[] parts = cartItemString.split(",");
-        for (String part : parts) {
-            if (part.startsWith("bookId=")) {
-                return Integer.parseInt(part.split("=")[1]);
-            }
+
+    private int extractBookId(String item) {
+        // Regular expression to match the bookId value
+        String regex = "bookId=(\\d+)";  // Match "bookId=" followed by digits
+
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(item);
+
+        if (matcher.find()) {
+            // Return the extracted bookId as an integer
+            return Integer.parseInt(matcher.group(1));
+        } else {
+            System.out.println("Error: 'bookId' not found in item.");
+            return -1;
         }
-        return -1;  // Return an invalid book ID if not found
     }
+
+
 
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -126,5 +170,13 @@ public class CartUI {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    private boolean showConfirmationAlert(String title, String header, String content) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText(content);
+        return alert.showAndWait().filter(ButtonType.OK::equals).isPresent();
     }
 }

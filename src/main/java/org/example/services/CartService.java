@@ -12,12 +12,13 @@ public class CartService {
         this.cart = Cart.getInstance(); // Use Singleton to get the Cart instance
     }
 
-    public void addBookToCart(int bookId, String bookName, int quantity, double price) {
-        cart.addItem(new CartItem(bookId, bookName, quantity, price));
+    public void addBookToCart(int customerId, int bookId, String bookName, int quantity, double price) {
+        CartItem newItem = new CartItem(bookId, bookName, quantity, price);
+        cart.addItem(newItem);
     }
 
     public void removeBookFromCart(int bookId) {
-        cart.removeItem(bookId);
+        cart.removeItem(bookId); // Call your remove logic with the bookId
     }
 
     public void updateQuantity(int bookId, int quantity) {
