@@ -95,9 +95,21 @@ public class OrderUI {
         orderListView.getItems().clear();
 
         List<Order> customerOrders = orderService.getOrdersByCustomerId(customerId);
+
+        // Check if no orders are found
+        if (customerOrders == null || customerOrders.isEmpty()) {
+            orderListView.getItems().add("No orders found.");
+            totalAmountLabel.setText("Total Amount: $0.00");
+            return; // Exit the method early
+        }
+
         double totalAmount = 0.0;
 
         for (Order order : customerOrders) {
+            // Log the order details to verify data
+            System.out.println("Order ID: " + order.getId() + ", Status: " + order.getStatus() +
+                    ", Amount: " + order.getTotalAmount() + ", Address: " + order.getDeliveryAddress());
+
             String orderDisplay = String.format("Order ID: %d, Status: %s, Amount: $%.2f, Address: %s",
                     order.getId(), order.getStatus(), order.getTotalAmount(), order.getDeliveryAddress());
             orderListView.getItems().add(orderDisplay);
@@ -107,6 +119,7 @@ public class OrderUI {
         String formattedAmount = NumberFormat.getCurrencyInstance().format(totalAmount);
         totalAmountLabel.setText("Total Amount: " + formattedAmount);
     }
+
 
     private int extractOrderId(String orderString) {
         try {

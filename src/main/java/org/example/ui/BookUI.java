@@ -97,8 +97,6 @@ public class BookUI {
     }
 
 
-
-
     public VBox createMainLayout() {
         VBox mainLayout = new VBox(15);
         mainLayout.setPadding(new Insets(15));
