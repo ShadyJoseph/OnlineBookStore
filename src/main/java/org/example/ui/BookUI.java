@@ -83,21 +83,17 @@ public class BookUI {
      }
 
     private void viewOrders() {
-        // Initialize OrderService to load orders from the file
+        // Initialize OrderService to load orders
         OrderService orderService = new OrderService();
-        List<Order> allOrders = orderService.getOrders();
 
-        if (allOrders.isEmpty()) {
-            System.out.println("No orders available to view.");
-            return;
-        }
+        // Create OrderUI with customerId and orderService
+        OrderUI orderUI = new OrderUI(customerId, orderService);
 
-        // Display orders in a new OrderUI stage
-        OrderUI orderUI = new OrderUI(customerId, allOrders);
-
+        // Open the OrderUI in a new Stage
         Stage orderStage = new Stage();
         orderUI.start(orderStage);
     }
+
 
     private void viewCart() {
         // Assuming you have a customerId variable available here.

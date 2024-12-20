@@ -1,5 +1,2 @@
-orderId=1,customerId=1,status=PENDING,deliveryAddress=cairo
-orderId=2,customerId=1,status=PENDING,deliveryAddress=cairo
-orderId=3,customerId=1,status=PENDING,deliveryAddress=shady
-orderId=4,customerId=1,status=PENDING,deliveryAddress=cairo
-orderId=5,customerId=1,status=PENDING,deliveryAddress=cairo
+id=1,customerId=1,status=PENDING,dateTime=2024-12-20T14:35:00,totalAmount=150.00,deliveryAddress=Cairo
+id=2,customerId=2,status=SHIPPED,dateTime=2024-12-19T16:00:00,totalAmount=200.50,deliveryAddress=Alexandria

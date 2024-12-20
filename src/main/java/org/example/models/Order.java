@@ -2,10 +2,10 @@ package org.example.models;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Order {
     private int id;
-    private static int orderIdCounter = 1;
     private int customerId;
     private LocalDateTime orderDate;
     private double totalAmount;
@@ -18,10 +18,9 @@ public class Order {
     public Order() {}
 
     // Constructor with parameters
-    public Order(int customerId, LocalDateTime orderDate, double totalAmount,
+    public Order(int id, int customerId, LocalDateTime orderDate, double totalAmount,
                  List<CartItem> items, String status, String deliveryAddress) {
-
-        id = orderIdCounter++;
+        this.id = id; // ID is set externally by OrderService
         this.customerId = customerId;
         this.orderDate = orderDate;
         this.totalAmount = totalAmount;
@@ -29,7 +28,6 @@ public class Order {
         this.status = status;
         this.deliveryAddress = deliveryAddress;
     }
-
 
     // Getters and Setters
     public int getId() { return id; }
@@ -45,7 +43,10 @@ public class Order {
     public void setTotalAmount(double totalAmount) { this.totalAmount = totalAmount; }
 
     public List<CartItem> getItems() { return items; }
-    public void setItems(List<CartItem> items) { this.items = items; }
+    public void setItems(List<CartItem> items) {
+        this.items = items;
+        calculateTotalAmount(); // Recalculate total amount when items change
+    }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
@@ -58,9 +59,13 @@ public class Order {
 
     // Helper method to calculate the total amount of the order based on CartItem prices and quantities
     public void calculateTotalAmount() {
-        this.totalAmount = items.stream()
-                .mapToDouble(item -> item.getPrice() * item.getQuantity())
-                .sum();
+        if (items != null) {
+            this.totalAmount = items.stream()
+                    .mapToDouble(item -> item.getPrice() * item.getQuantity())
+                    .sum();
+        } else {
+            this.totalAmount = 0.0;
+        }
     }
 
     // Method to update order status (useful for admin updates)
@@ -75,15 +80,15 @@ public class Order {
 
     @Override
     public String toString() {
-        return "Order{" +
-                "id=" + id +
-                ", customerId=" + customerId +
-                ", orderDate=" + orderDate +
-                ", totalAmount=" + totalAmount +
-                ", items=" + items +
-                ", status='" + status + '\'' +
-                ", deliveryAddress='" + deliveryAddress + '\'' +
-                ", deliveredAt=" + deliveredAt +
-                '}';
+        String itemsString = (items != null) ? items.stream()
+                .map(CartItem::toString)
+                .collect(Collectors.joining("; ")) : "[]";
+
+        return String.format(
+                "id=%d,customerId=%d,status=%s,orderDate=%s,totalAmount=%.2f,deliveryAddress=%s,deliveredAt=%s,items=[%s]",
+                id, customerId, status, orderDate, totalAmount, deliveryAddress,
+                deliveredAt != null ? deliveredAt : "null",
+                itemsString
+        );
     }
 }

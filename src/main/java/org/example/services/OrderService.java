@@ -7,16 +7,19 @@ import org.example.models.Order;
 import java.io.*;
 import java.nio.file.*;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class OrderService {
     private static final String ORDERS_FILE = "src/main/resources/orders.txt";
     private final List<Order> orders = new ArrayList<>();
+    private static int orderIdCounter = 1; // Counter for order IDs
 
     // Constructor that loads orders from file
     public OrderService() {
         loadOrdersFromFile();
+        orderIdCounter = orders.stream().mapToInt(Order::getId).max().orElse(0) + 1; // Initialize counter
     }
 
     // Admin Functionalities
@@ -32,8 +35,8 @@ public class OrderService {
         Optional<Order> order = findOrderById(orderId);
         if (order.isPresent() && order.get().getStatus().equals(OrderStatus.PENDING.name())) {
             order.get().setStatus(OrderStatus.CONFIRMED.name());
+            saveOrdersToFile();
             System.out.println("Order confirmed: " + order.get());
-            saveOrdersToFile(); // Save after modification
             return true;
         }
         System.out.println("Order not found or already processed.");
@@ -44,8 +47,8 @@ public class OrderService {
         Optional<Order> order = findOrderById(orderId);
         if (order.isPresent() && !order.get().getStatus().equals(OrderStatus.DELIVERED.name())) {
             order.get().setStatus(OrderStatus.CANCELLED.name());
+            saveOrdersToFile();
             System.out.println("Order cancelled: " + order.get());
-            saveOrdersToFile(); // Save after modification
             return true;
         }
         System.out.println("Order not found or cannot be cancelled.");
@@ -59,6 +62,7 @@ public class OrderService {
         }
 
         Order newOrder = new Order(
+                generateOrderId(),
                 customerId,
                 LocalDateTime.now(),
                 0.0,
@@ -68,48 +72,15 @@ public class OrderService {
         );
         newOrder.calculateTotalAmount();
         orders.add(newOrder);
+        saveOrdersToFile();
         System.out.println("Order placed: " + newOrder);
-        saveOrdersToFile(); // Save after placing the order
         return newOrder;
-    }
-
-    public List<Order> getOrders() {
-        return orders;
     }
 
     public String trackOrderStatus(int orderId) {
         Optional<Order> order = findOrderById(orderId);
-        if (order.isPresent()) {
-            return "Order status: " + order.get().getStatus();
-        } else {
-            return null;  // Return null if order not found
-        }
-    }
-
-    public void viewPastOrders(int customerId) {
-        List<Order> customerOrders = orders.stream()
-                .filter(order -> order.getCustomerId() == customerId)
-                .collect(Collectors.toList());
-
-        if (customerOrders.isEmpty()) {
-            System.out.println("No past orders found for customer ID: " + customerId);
-        } else {
-            customerOrders.forEach(System.out::println);
-        }
-    }
-
-    public boolean cancelOrderByCustomer(int orderId, int customerId) {
-        Optional<Order> order = findOrderById(orderId);
-        if (order.isPresent() &&
-                order.get().getCustomerId() == customerId &&
-                order.get().getStatus().equals(OrderStatus.PENDING.name())) {
-            order.get().setStatus(OrderStatus.CANCELLED.name());
-            System.out.println("Order cancelled by customer: " + order.get());
-            saveOrdersToFile(); // Save after modification
-            return true;
-        }
-        System.out.println("Order not found or cannot be cancelled.");
-        return false;
+        return order.map(value -> "Order status: " + value.getStatus())
+                .orElse("Order not found");
     }
 
     // Private Helper Methods
@@ -125,11 +96,11 @@ public class OrderService {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     try {
-                        // Implement order deserialization logic (parse string into Order object)
-                        Order order = deserializeOrder(line);
+                        Order order = deserializeOrder(line.trim());
                         orders.add(order);
-                    } catch (Exception e) {
+                    } catch (IllegalArgumentException e) {
                         System.err.println("Error parsing order line: " + line);
+                        e.printStackTrace(); // Optional: for detailed debugging
                     }
                 }
             }
@@ -139,21 +110,26 @@ public class OrderService {
     }
 
     private Order deserializeOrder(String orderString) {
-        // Simple deserialization logic, adapt according to your Order format
         String[] parts = orderString.split(",");
-        int orderId = Integer.parseInt(parts[0].split("=")[1]);
-        int customerId = Integer.parseInt(parts[1].split("=")[1]);
-        String status = parts[2].split("=")[1];
-        String deliveryAddress = parts[3].split("=")[1];
+        if (parts.length < 6) {
+            throw new IllegalArgumentException("Invalid order format: " + orderString);
+        }
+        try {
+            int id = Integer.parseInt(parts[0].split("=")[1]);
+            int customerId = Integer.parseInt(parts[1].split("=")[1]);
+            String status = parts[2].split("=")[1];
+            LocalDateTime dateTime = LocalDateTime.parse(parts[3].split("=")[1], DateTimeFormatter.ISO_DATE_TIME);
+            double totalAmount = Double.parseDouble(parts[4].split("=")[1]);
+            String deliveryAddress = parts[5].split("=")[1];
 
-        // Here, we return a dummy list of CartItems for simplicity. This should be parsed accordingly.
-        List<CartItem> items = new ArrayList<>();  // This should be parsed as well, if needed
-
-        return new Order( customerId, LocalDateTime.now(), 0.0, items, status, deliveryAddress);
+            return new Order(id, customerId, dateTime, totalAmount, new ArrayList<>(), status, deliveryAddress);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Error deserializing order: " + orderString, e);
+        }
     }
 
     private void saveOrdersToFile() {
-        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(ORDERS_FILE), StandardOpenOption.CREATE)) {
+        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(ORDERS_FILE), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
             for (Order order : orders) {
                 writer.write(serializeOrder(order) + System.lineSeparator());
             }
@@ -163,7 +139,24 @@ public class OrderService {
     }
 
     private String serializeOrder(Order order) {
-        // Implement order serialization (convert Order object to string)
-        return String.format("orderId=%d,customerId=%d,status=%s,deliveryAddress=%s", order.getId(), order.getCustomerId(), order.getStatus(), order.getDeliveryAddress());
+        return String.format(
+                "id=%d,customerId=%d,status=%s,dateTime=%s,totalAmount=%.2f,deliveryAddress=%s",
+                order.getId(),
+                order.getCustomerId(),
+                order.getStatus(),
+                order.getOrderDate().format(DateTimeFormatter.ISO_DATE_TIME),
+                order.getTotalAmount(),
+                order.getDeliveryAddress()
+        );
+    }
+
+    public List<Order> getOrdersByCustomerId(int customerId) {
+        return orders.stream()
+                .filter(order -> order.getCustomerId() == customerId)
+                .collect(Collectors.toList());
+    }
+
+    private int generateOrderId() {
+        return orderIdCounter++;
     }
 }

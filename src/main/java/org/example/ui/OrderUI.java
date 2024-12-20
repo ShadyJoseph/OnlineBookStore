@@ -16,12 +16,10 @@ public class OrderUI {
     private final ListView<String> orderListView = new ListView<>();
     private final Label totalAmountLabel = new Label("Total Amount: $0.00");
     private final int customerId;
-    private final List<Order> orders;
 
-    public OrderUI(int customerId, List<Order> orders) {
-        this.orderService = new OrderService();
+    public OrderUI(int customerId, OrderService orderService) {
         this.customerId = customerId;
-        this.orders = orders;
+        this.orderService = orderService;
     }
 
     public void start(Stage primaryStage) {
@@ -66,12 +64,12 @@ public class OrderUI {
         confirmationAlert.setContentText("Order ID: " + orderId);
 
         if (confirmationAlert.showAndWait().filter(ButtonType.OK::equals).isPresent()) {
-            boolean success = orderService.cancelOrderByCustomer(orderId, customerId);
+            boolean success = orderService.cancelOrder(orderId);
             if (success) {
                 updateOrderDisplay();
                 showAlert("Success", "Order has been cancelled.");
             } else {
-                showAlert("Cancellation Failed", "Unable to cancel the order.");
+                showAlert("Cancellation Failed", "Order not found, already delivered, or cannot be cancelled.");
             }
         }
     }
@@ -96,10 +94,12 @@ public class OrderUI {
     private void updateOrderDisplay() {
         orderListView.getItems().clear();
 
+        List<Order> customerOrders = orderService.getOrdersByCustomerId(customerId);
         double totalAmount = 0.0;
-        for (Order order : orders) {
-            String orderDisplay = String.format("Order ID: %d, Status: %s, Amount: $%.2f",
-                    order.getId(), order.getStatus(), order.getTotalAmount());
+
+        for (Order order : customerOrders) {
+            String orderDisplay = String.format("Order ID: %d, Status: %s, Amount: $%.2f, Address: %s",
+                    order.getId(), order.getStatus(), order.getTotalAmount(), order.getDeliveryAddress());
             orderListView.getItems().add(orderDisplay);
             totalAmount += order.getTotalAmount();
         }
@@ -109,13 +109,17 @@ public class OrderUI {
     }
 
     private int extractOrderId(String orderString) {
-        String[] parts = orderString.split(",");
-        for (String part : parts) {
-            if (part.startsWith("Order ID:")) {
-                return Integer.parseInt(part.split(":")[1].trim());
+        try {
+            String[] parts = orderString.split(",");
+            for (String part : parts) {
+                if (part.trim().startsWith("Order ID:")) {
+                    return Integer.parseInt(part.split(":")[1].trim());
+                }
             }
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid order string format. Error: " + e.getMessage());
         }
-        throw new IllegalArgumentException("Invalid order string format.");
+        throw new IllegalArgumentException("Order ID not found in the selected string.");
     }
 
     private void showAlert(String title, String message) {
