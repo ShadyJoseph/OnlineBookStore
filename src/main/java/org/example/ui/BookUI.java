@@ -152,8 +152,8 @@ public class BookUI {
     }
 
     private void viewCart() {
-        int customerId = getCustomerId();
-        CartUI cartUI = new CartUI(customerId);
+        int customerId = getCustomerId();  // Assuming this returns an int
+        CartUI cartUI = new CartUI(String.valueOf(customerId));  // Convert customerId to String
         Stage cartStage = new Stage();
         cartUI.start(cartStage);
     }
@@ -281,7 +281,7 @@ public class BookUI {
             }
 
             int customerId = getCustomerId();  // Get customer ID
-            cartService.addBookToCart(customerId, selectedBook.getId(), selectedBook.getTitle(), quantity, selectedBook.getPrice());
+            cartService.addBookToCart(String.valueOf(customerId), selectedBook.getId(), selectedBook.getTitle(), quantity, selectedBook.getPrice());
             selectedBook.setStock(selectedBook.getStock() - quantity);
             refreshUI();
         } catch (NumberFormatException e) {

@@ -2,11 +2,7 @@ package org.example.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import java.io.Serializable;
-
-public class CartItem implements Serializable {
-    private static final long serialVersionUID = 1L;
-
+public class CartItem {
     private int bookId;
     private String bookName;
     private int quantity;
@@ -53,7 +49,7 @@ public class CartItem implements Serializable {
         this.price = price;
     }
 
-    @JsonIgnore  // Ignore this field during deserialization
+    @JsonIgnore
     public double getTotalPrice() {
         return price * quantity;
     }

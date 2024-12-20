@@ -1,6 +1,5 @@
 package org.example.ui;
 
-
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -19,9 +18,9 @@ public class CartUI {
     private final OrderService orderService;
     private final ListView<String> cartListView = new ListView<>();
     private final Label totalPriceLabel = new Label("Total Price: $0.0");
-    private final int customerId;
+    private final String customerId;
 
-    public CartUI(int customerId) {
+    public CartUI(String customerId) {
         this.cartService = new CartService();
         this.orderService = new OrderService();
         this.customerId = customerId;
@@ -70,7 +69,7 @@ public class CartUI {
         }
 
         if (showConfirmationAlert("Remove Item", "Are you sure you want to remove this item?", selectedItem)) {
-            cartService.removeBookFromCart(bookId);
+            cartService.removeBookFromCart(customerId, bookId);
             updateCartDisplay();
         }
     }
@@ -99,7 +98,7 @@ public class CartUI {
                 if (newQuantity <= 0) {
                     showAlert("Invalid Quantity", "Quantity must be greater than zero.");
                 } else {
-                    cartService.updateQuantity(bookId, newQuantity);
+                    cartService.updateQuantity(customerId, bookId, newQuantity);
                     updateCartDisplay();
                 }
             } catch (NumberFormatException e) {
@@ -110,13 +109,13 @@ public class CartUI {
 
     private void clearCart() {
         if (showConfirmationAlert("Clear Cart", "Are you sure you want to clear the cart?", "This action cannot be undone.")) {
-            cartService.clearCart();
+            cartService.clearCart(customerId);
             updateCartDisplay();
         }
     }
 
     private void placeOrder(Stage primaryStage) {
-        if (cartService.getCartItems().isEmpty()) {
+        if (cartService.getCartItems(customerId).isEmpty()) {
             showAlert("Empty Cart", "Your cart is empty. Add items before placing an order.");
             return;
         }
@@ -128,9 +127,9 @@ public class CartUI {
 
         addressDialog.showAndWait().ifPresent(address -> {
             try {
-                List<CartItem> items = cartService.getCartItems();
-                orderService.placeOrder(customerId, items, address);
-                cartService.clearCart();
+                List<CartItem> items = cartService.getCartItems(customerId);
+                orderService.placeOrder(Integer.valueOf(customerId), items, address);
+                cartService.clearCart(customerId);
                 updateCartDisplay();
                 showAlert("Order Placed", "Your order has been placed successfully.");
             } catch (IllegalArgumentException e) {
@@ -141,10 +140,9 @@ public class CartUI {
 
     private void updateCartDisplay() {
         cartListView.getItems().clear();
-        cartService.getCartItems().forEach(item -> cartListView.getItems().add(item.toString()));
-        totalPriceLabel.setText("Total Price: $" + cartService.calculateTotal());
+        cartService.getCartItems(customerId).forEach(item -> cartListView.getItems().add(item.toString()));
+        totalPriceLabel.setText("Total Price: $" + cartService.calculateTotal(customerId));
     }
-
 
     private int extractBookId(String item) {
         // Regular expression to match the bookId value
@@ -161,8 +159,6 @@ public class CartUI {
             return -1;
         }
     }
-
-
 
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);

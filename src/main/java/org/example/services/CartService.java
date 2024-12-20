@@ -1,39 +1,50 @@
 package org.example.services;
 
+import org.example.commands.*;
 import org.example.models.Cart;
 import org.example.models.CartItem;
 
 import java.util.List;
 
 public class CartService {
-    private final Cart cart;
+    private final CommandInvoker commandInvoker;
 
     public CartService() {
-        this.cart = Cart.getInstance(); // Use Singleton to get the Cart instance
+        this.commandInvoker = new CommandInvoker();
     }
 
-    public void addBookToCart(int customerId, int bookId, String bookName, int quantity, double price) {
+    public void addBookToCart(String userId, int bookId, String bookName, int quantity, double price) {
+        Cart cart = Cart.getInstance(userId);
         CartItem newItem = new CartItem(bookId, bookName, quantity, price);
-        cart.addItem(newItem);
+        AddBookToCartCommand command = new AddBookToCartCommand(cart, newItem);
+        commandInvoker.executeCommand(command);
     }
 
-    public void removeBookFromCart(int bookId) {
-        cart.removeItem(bookId); // Call your remove logic with the bookId
+    public void removeBookFromCart(String userId, int bookId) {
+        Cart cart = Cart.getInstance(userId);
+        RemoveBookFromCartCommand command = new RemoveBookFromCartCommand(cart, bookId);
+        commandInvoker.executeCommand(command);
     }
 
-    public void updateQuantity(int bookId, int quantity) {
-        cart.updateQuantity(bookId, quantity);
+    public void updateQuantity(String userId, int bookId, int quantity) {
+        Cart cart = Cart.getInstance(userId);
+        UpdateQuantityCommand command = new UpdateQuantityCommand(cart, bookId, quantity);
+        commandInvoker.executeCommand(command);
     }
 
-    public List<CartItem> getCartItems() {
+    public List<CartItem> getCartItems(String userId) {
+        Cart cart = Cart.getInstance(userId);
         return cart.getItems();
     }
 
-    public void clearCart() {
-        cart.clear();
+    public void clearCart(String userId) {
+        Cart cart = Cart.getInstance(userId);
+        ClearCartCommand command = new ClearCartCommand(cart);
+        commandInvoker.executeCommand(command);
     }
 
-    public double calculateTotal() {
+    public double calculateTotal(String userId) {
+        Cart cart = Cart.getInstance(userId);
         return cart.getTotalPrice();
     }
 }
