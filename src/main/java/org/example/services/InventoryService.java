@@ -4,18 +4,17 @@ import org.example.models.Book;
 import org.example.models.Sale;
 
 import java.io.*;
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class InventoryService {
     private static final String SALES_FILE = "src/main/resources/sales.txt";
-    protected final FileManager fileManager = new FileManager();
 
+    protected final FileManager fileManager = new FileManager();
     private final List<Book> books;
     private final List<Sale> sales = new ArrayList<>();
 
@@ -66,7 +65,6 @@ public class InventoryService {
     // Methods to handle sales and books
     public boolean recordSale(int bookId, int quantitySold) {
         boolean success = false;
-        // Logic to record sale (ensure the sale is valid)
         Optional<Book> book = books.stream().filter(b -> b.getId() == bookId).findFirst();
         if (book.isPresent()) {
             Book b = book.get();
@@ -85,7 +83,6 @@ public class InventoryService {
     public boolean addNewBook(Book book) {
         boolean success = books.add(book);
         if (success) {
-            // Delegate saving books to the FileManager
             fileManager.saveBooksToFile(books);
         }
         return success;
@@ -94,9 +91,51 @@ public class InventoryService {
     public boolean deleteBook(int bookId) {
         boolean success = books.removeIf(book -> book.getId() == bookId);
         if (success) {
-            // Delegate saving books to the FileManager
             fileManager.saveBooksToFile(books);
         }
         return success;
+    }
+
+    // Inventory monitoring: List books with low stock
+    public List<Book> getBooksWithLowStock(int threshold) {
+        return books.stream()
+                .filter(b -> b.getStock() <= threshold)
+                .collect(Collectors.toList());
+    }
+
+    // Statistics monitoring: Total revenue from all sales
+    public double getTotalRevenue() {
+        return sales.stream()
+                .mapToDouble(Sale::getTotalRevenue)
+                .sum();
+    }
+
+    // Statistics monitoring: Total quantity of a specific book sold
+    public int getTotalQuantitySoldForBook(int bookId) {
+        return sales.stream()
+                .filter(sale -> sale.getBookId() == bookId)
+                .mapToInt(Sale::getQuantitySold)
+                .sum();
+    }
+
+    // Statistics monitoring: Most popular books (based on sales quantity)
+    public List<Book> getMostPopularBooks() {
+        return books.stream()
+                .sorted((b1, b2) -> Integer.compare(
+                        getTotalQuantitySoldForBook(b2.getId()),
+                        getTotalQuantitySoldForBook(b1.getId())))
+                .limit(5) // Get top 5 popular books
+                .collect(Collectors.toList());
+    }
+
+    // Print statistics summary
+    public void printStatistics() {
+        System.out.println("Total revenue: " + getTotalRevenue());
+        System.out.println("Most popular books:");
+        getMostPopularBooks().forEach(book ->
+                System.out.println(book.getTitle() + " - Total Sold: " + getTotalQuantitySoldForBook(book.getId())));
+        System.out.println("Books with low stock:");
+        getBooksWithLowStock(5).forEach(book ->
+                System.out.println(book.getTitle() + " - Stock: " + book.getStock()));
     }
 }

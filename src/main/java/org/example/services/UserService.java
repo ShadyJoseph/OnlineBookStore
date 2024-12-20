@@ -16,8 +16,7 @@ import java.util.logging.Logger;
 
 public class UserService {
     private static final String USERS_FILE_PATH = "src/main/resources/users.txt";
-    private static final String ROLE_CUSTOMER = "CUSTOMER";
-    private static final String ROLE_ADMIN = "ADMIN";
+
 
     private final List<User> users = new ArrayList<>();
     private final AtomicInteger userIdCounter = new AtomicInteger(1);
@@ -90,7 +89,7 @@ public class UserService {
 
     // Overloaded signUp for Admin (does not require address and phone)
     public synchronized User signUp(String username, String password) {
-        if (!validateUserSignUpData(username, password)) return null;  // Common validation for username and password
+        if (!validateUserSignUpData(username, password)) return null;
 
         if (isUsernameTaken(username)) {
             LOGGER.log(Level.WARNING, "Attempt to sign up with an existing username: {0}", username);

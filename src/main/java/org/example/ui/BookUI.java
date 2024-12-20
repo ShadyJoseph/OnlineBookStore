@@ -15,12 +15,12 @@ import org.example.models.Review;
 import org.example.services.BookServiceProxy;
 import org.example.services.CartService;
 import org.example.services.OrderService;
-import org.example.services.ReviewService;  // Assuming ReviewService exists to fetch reviews
+import org.example.services.ReviewService;
 
 import java.util.List;
 
 public class BookUI {
-    private final int customerId;  // Store the customerId
+    private final int customerId;
     private static final String ERROR_LOADING_BOOKS = "Failed to load books.";
     private static final String ERROR_SEARCH_BOOKS = "Failed to search books.";
     private static final String ALERT_INVALID_QUANTITY = "Please enter a valid quantity.";
@@ -35,7 +35,6 @@ public class BookUI {
     private final ObservableList<Book> bookData = FXCollections.observableArrayList();
     private final ObservableList<CartItem> cartData = FXCollections.observableArrayList();
 
-    // Constructor accepting customerId
     public BookUI(int customerId) {
         this.customerId = customerId;
     }
@@ -155,7 +154,7 @@ public class BookUI {
     }
 
     private void viewCart() {
-        int customerId = getCustomerId();  // Replace with actual method to get customerId.
+        int customerId = getCustomerId();
         CartUI cartUI = new CartUI(customerId);
         Stage cartStage = new Stage();
         cartUI.start(cartStage);
@@ -190,7 +189,7 @@ public class BookUI {
             {
                 viewReviewButton.setOnAction(e -> {
                     Book selectedBook = getTableView().getItems().get(getIndex());
-                    viewReviewsForBook(selectedBook.getId());  // Show reviews for the selected book
+                    viewReviewsForBook(selectedBook.getId());
                 });
             }
 
@@ -308,7 +307,6 @@ public class BookUI {
         return 1; // Example customer ID
     }
 
-    // Method to open a new window with the reviews for a selected book
     private void viewReviewsForBook(int bookId) {
         try {
             List<Review> reviews = reviewService.getReviewsForBook(bookId);  // Fetch reviews for the book

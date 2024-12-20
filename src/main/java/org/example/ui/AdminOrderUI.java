@@ -9,7 +9,6 @@ import org.example.services.OrderService;
 import org.example.models.Order;
 import java.text.NumberFormat;
 import java.util.List;
-import java.util.Optional;
 
 public class AdminOrderUI {
     private final OrderService orderService;

@@ -37,7 +37,7 @@ public class BookService {
     }
 
     public boolean updateBook(Book updatedBook) {
-        reloadBooksIfNeeded(); // Ensure the latest list of books is loaded
+        reloadBooksIfNeeded();
 
         for (Book book : books) {
             if (book.getId() == updatedBook.getId()) {

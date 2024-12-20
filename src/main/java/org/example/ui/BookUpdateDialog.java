@@ -6,10 +6,10 @@ import org.example.models.Book;
 
 public class BookUpdateDialog extends Dialog<Book> {
 
-    private final Book book; // Store the passed book object as an instance variable
+    private final Book book;
 
     public BookUpdateDialog(Book book) {
-        this.book = book; // Initialize the instance variable
+        this.book = book;
 
         setTitle("Update Book");
         setHeaderText("Update details for book: " + book.getTitle());

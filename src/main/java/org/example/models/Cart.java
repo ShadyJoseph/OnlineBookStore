@@ -47,25 +47,14 @@ public class Cart {
     }
 
     public void removeItem(int bookId) {
-        // Iterate over your cart items and remove the one matching the bookId
-        items.removeIf(item -> item.getBookId() == bookId);  // Assuming `getBookId` is the method to retrieve the book ID
-        saveToFile();  // Save the updated cart
+        items.removeIf(item -> item.getBookId() == bookId);
+        saveToFile();
     }
 
     public void updateQuantity(int bookId, int quantity) {
         for (CartItem item : items) {
             if (item.getBookId() == bookId) {
                 item.setQuantity(quantity);
-                saveToFile();
-                return;
-            }
-        }
-    }
-
-    public void updatePrice(int bookId, double price) {
-        for (CartItem item : items) {
-            if (item.getBookId() == bookId) {
-                item.setPrice(price);
                 saveToFile();
                 return;
             }
