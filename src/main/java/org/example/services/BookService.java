@@ -10,9 +10,18 @@ public class BookService {
     protected final FileManager fileManager = new FileManager();
 
     public void addBook(Book book) {
+        // Make sure the list of books is loaded
+        if (books.isEmpty()) {
+            books.addAll(fileManager.loadBooksFromFile());
+        }
+
+        // Add the new book to the list
         books.add(book);
+
+        // Save the updated list of books to the file
         fileManager.saveBooksToFile(books);
     }
+
 
     public boolean removeBookById(int bookId) {
         boolean removed = books.removeIf(book -> book.getId() == bookId);
@@ -25,20 +34,14 @@ public class BookService {
     public boolean updateBook(Book updatedBook) {
         for (Book book : books) {
             if (book.getId() == updatedBook.getId()) {
-                book.setTitle(updatedBook.getTitle());
-                book.setAuthor(updatedBook.getAuthor());
-                book.setPrice(updatedBook.getPrice());
-                book.setStock(updatedBook.getStock());
-                book.setCategory(updatedBook.getCategory());
-                book.setPopularity(updatedBook.getPopularity());
-                book.setEdition(updatedBook.getEdition());
-                book.setCoverImage(updatedBook.getCoverImage());
+                book.updateDetails(updatedBook);
                 fileManager.saveBooksToFile(books);
                 return true;
             }
         }
         return false;
     }
+
 
     public List<Book> viewAllBooks() {
         return new ArrayList<>(books);

@@ -26,7 +26,6 @@ public class AdminBookUI {
     private final TableView<Book> bookTable = new TableView<>();
     private final ObservableList<Book> bookData = FXCollections.observableArrayList();
 
-    // Constructor
     public AdminBookUI() {}
 
     public VBox createMainLayout() {
@@ -38,7 +37,7 @@ public class AdminBookUI {
         configureTable(bookTable, 400);
 
         loadBookTableColumns();
-        loadBooks();
+        refreshUI();
 
         mainLayout.getChildren().addAll(titleLabel, controls, bookTable);
         return mainLayout;
@@ -69,7 +68,6 @@ public class AdminBookUI {
         Button updateButton = new Button("Update Book");
         updateButton.setOnAction(e -> updateBook());
 
-        // New button to view orders
         Button viewOrdersButton = new Button("View Orders");
         viewOrdersButton.setOnAction(e -> viewOrders());
 
@@ -77,57 +75,19 @@ public class AdminBookUI {
         return controls;
     }
 
-    private void addBook() {
-        BookAddDialog dialog = new BookAddDialog();
-        dialog.showAndWait().ifPresent(book -> {
-            try {
-                validateBookDetails(book);
-                bookService.addBook(book);
-                refreshUI();
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Book added successfully.");
-            } catch (Exception e) {
-                showAlert(Alert.AlertType.ERROR, "Error", "Failed to add book: " + e.getMessage());
-            }
-        });
-    }
+
 
     private void viewOrders() {
-        // Initialize OrderService for loading orders
         OrderService orderService = new OrderService();
-
-        // Create AdminOrderUI instance to manage and display admin orders
         AdminOrderUI adminOrderUI = new AdminOrderUI(orderService);
-
-        // Create a new Stage to display the orders
         Stage orderStage = new Stage();
         adminOrderUI.start(orderStage);
-    }
-
-
-    private void deleteBook() {
-        Book selectedBook = bookTable.getSelectionModel().getSelectedItem();
-        if (selectedBook == null) {
-            showAlert(Alert.AlertType.WARNING, "No Book Selected", "Please select a book to delete.");
-            return;
-        }
-
-        try {
-            boolean deleted = bookService.removeBookById(selectedBook.getId());
-            if (deleted) {
-                refreshUI();
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Book deleted successfully.");
-            } else {
-                showAlert(Alert.AlertType.ERROR, "Error", "Failed to delete the book.");
-            }
-        } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "Error", "Error deleting book: " + e.getMessage());
-        }
     }
 
     private void updateBook() {
         Book selectedBook = bookTable.getSelectionModel().getSelectedItem();
         if (selectedBook == null) {
-            showAlert(Alert.AlertType.WARNING, "No Book Selected", "Please select a book to update.");
+            showWarningMessage("No Book Selected", "Please select a book to update.");
             return;
         }
 
@@ -135,14 +95,19 @@ public class AdminBookUI {
         dialog.showAndWait().ifPresent(updatedBook -> {
             try {
                 validateBookDetails(updatedBook);
-                bookService.updateBook(updatedBook);
-                refreshUI();
-                showAlert(Alert.AlertType.INFORMATION, "Success", "Book updated successfully.");
+                boolean updated = bookService.updateBook(updatedBook);
+                if (updated) {
+                    showSuccessMessage("Book updated successfully.");
+                    refreshUIWithFeedback();
+                } else {
+                    showErrorMessage("Failed to update the book. Ensure the book exists.");
+                }
             } catch (Exception e) {
-                showAlert(Alert.AlertType.ERROR, "Error", "Failed to update book: " + e.getMessage());
+                showErrorMessage("Failed to update book: " + e.getMessage());
             }
         });
     }
+
 
     private void validateBookDetails(Book book) throws IllegalArgumentException {
         if (book.getPrice() <= 0) {
@@ -177,36 +142,131 @@ public class AdminBookUI {
         bookTable.getColumns().addAll(idColumn, titleColumn, authorColumn, priceColumn, stockColumn);
     }
 
-    private void loadBooks() {
+    private void refreshUI() {
         try {
+            // Clear existing data
             bookData.clear();
-            bookData.addAll(bookServiceProxy.viewAllBooks());
+
+            // Fetch updated book data
+            List<Book> books = bookServiceProxy.viewAllBooks();
+            if (books.isEmpty()) {
+                showInfoMessage("No Books Available", "No books found in the system.");
+            }
+
+            // Add new data to the observable list
+            bookData.addAll(books);
+
+            // Update the table items
             bookTable.setItems(bookData);
+
         } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "Error", ERROR_LOADING_BOOKS);
+            showErrorMessage(ERROR_LOADING_BOOKS + "\n" + e.getMessage());
         }
     }
 
+    private void refreshUIWithFeedback() {
+        try {
+            // Clear the table and show a loading placeholder
+            bookTable.setPlaceholder(new Label("Loading books, please wait..."));
+
+            // Fetch updated book data
+            List<Book> books = bookServiceProxy.viewAllBooks();
+
+            // Update the observable list
+            bookData.setAll(books);
+
+            // Set the updated list to the table
+            bookTable.setItems(bookData);
+
+            // Clear the placeholder after loading
+            if (books.isEmpty()) {
+                bookTable.setPlaceholder(new Label("No books available."));
+            }
+
+        } catch (Exception e) {
+            bookTable.setPlaceholder(new Label("Failed to load books."));
+            showErrorMessage(ERROR_LOADING_BOOKS + "\n" + e.getMessage());
+        }
+    }
+
+    // Replace refreshUI calls with refreshUIWithFeedback
+    private void addBook() {
+        BookAddDialog dialog = new BookAddDialog();
+        dialog.showAndWait().ifPresent(book -> {
+            try {
+                validateBookDetails(book);
+                bookService.addBook(book);
+                showSuccessMessage("Book added successfully.");
+                refreshUIWithFeedback(); // Use enhanced refresh
+            } catch (Exception e) {
+                showErrorMessage("Failed to add book: " + e.getMessage());
+            }
+        });
+    }
+
+    private void deleteBook() {
+        Book selectedBook = bookTable.getSelectionModel().getSelectedItem();
+        if (selectedBook == null) {
+            showWarningMessage("No Book Selected", "Please select a book to delete.");
+            return;
+        }
+
+        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmation.setTitle("Delete Confirmation");
+        confirmation.setHeaderText("Are you sure you want to delete this book?");
+        confirmation.setContentText("Book: " + selectedBook.getTitle());
+
+        confirmation.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try {
+                    boolean deleted = bookService.removeBookById(selectedBook.getId());
+                    if (deleted) {
+                        showSuccessMessage("Book deleted successfully.");
+                        refreshUIWithFeedback();
+                    } else {
+                        showErrorMessage("Failed to delete the book. Ensure it exists.");
+                    }
+                } catch (Exception e) {
+                    showErrorMessage("Error deleting book: " + e.getMessage());
+                }
+            }
+        });
+    }
+
+
+
     private void searchBooks(String keyword) {
         if (keyword.isEmpty()) {
-            loadBooks();
+            refreshUI();
             return;
         }
 
         try {
             List<Book> result = bookServiceProxy.searchBooks(keyword);
             if (result.isEmpty()) {
-                showAlert(Alert.AlertType.INFORMATION, "No Results", "No books found for the given search.");
+                showInfoMessage("No Results", "No books found for the given search.");
             } else {
                 bookData.setAll(result);
             }
         } catch (Exception e) {
-            showAlert(Alert.AlertType.ERROR, "Error", ERROR_SEARCH_BOOKS);
+            showErrorMessage(ERROR_SEARCH_BOOKS);
         }
     }
 
-    private void refreshUI() {
-        loadBooks();
+    private void showSuccessMessage(String message) {
+        showAlert(Alert.AlertType.INFORMATION, "Success", message);
+    }
+
+    private void showErrorMessage(String message) {
+        showAlert(Alert.AlertType.ERROR, "Error", message);
+    }
+
+    private void showWarningMessage(String title, String message) {
+        showAlert(Alert.AlertType.WARNING, title, message);
+    }
+
+    private void showInfoMessage(String title, String message) {
+        showAlert(Alert.AlertType.INFORMATION, title, message);
     }
 
     private void showAlert(Alert.AlertType alertType, String title, String message) {

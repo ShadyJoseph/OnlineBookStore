@@ -1,3 +1,4 @@
+// FileManager Class
 package org.example.services;
 
 import org.example.models.Book;
@@ -31,44 +32,33 @@ public class FileManager {
                         String edition = parts[7].trim();
                         String coverImage = parts[8].trim();
 
-                        // Check for duplicate IDs
-                        boolean duplicateId = books.stream().anyMatch(book -> book.getId() == id);
-                        if (duplicateId) {
-                            System.err.println("Duplicate ID detected, skipping line: " + line);
-                            continue;
-                        }
-
                         books.add(new Book(id, title, author, price, stock, category, popularity, edition, coverImage));
-                        if (id > maxId) {
-                            maxId = id;
-                        }
+                        maxId = Math.max(maxId, id);
                     } catch (NumberFormatException e) {
-                        System.err.println("Invalid number format in line: " + line);
+                        System.err.println("Invalid number format: " + line);
                     }
                 } else {
-                    System.err.println("Invalid line format: " + line);
+                    System.err.println("Invalid format: " + line);
                 }
             }
         } catch (IOException e) {
-            System.err.println("Error reading book file: " + e.getMessage());
+            System.err.println("Error reading file: " + e.getMessage());
         }
 
-        // Update the idCounter in the Book class
         Book.setIdCounter(maxId + 1);
         return books;
     }
-
 
     public void saveBooksToFile(List<Book> books) {
         try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(FILE_PATH))) {
             for (Book book : books) {
                 writer.write(String.format("%d,%s,%s,%.2f,%d,%s,%d,%s,%s%n",
-                        book.getId(), book.getTitle(), book.getAuthor(),
-                        book.getPrice(), book.getStock(), book.getCategory(),
-                        book.getPopularity(), book.getEdition(), book.getCoverImage()));
+                        book.getId(), book.getTitle(), book.getAuthor(), book.getPrice(),
+                        book.getStock(), book.getCategory(), book.getPopularity(),
+                        book.getEdition(), book.getCoverImage()));
             }
         } catch (IOException e) {
-            System.err.println("Error writing to book file: " + e.getMessage());
+            System.err.println("Error writing file: " + e.getMessage());
         }
     }
 }
